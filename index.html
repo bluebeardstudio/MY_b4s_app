@@ -519,13 +519,15 @@ async function pingMember(name) {
         try {
             const response = await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`);
             const result = await response.json();
+            
             if (result.status === "success") {
                 alert(`Пуш-нагадування успішно надіслано для ${name}!`);
             } else {
-                alert(`Не вдалося надіслати: ${result.message || 'немає токена пристрою'}`);
+                // Покажемо точну причину від сержанта/сервера
+                alert(`Помилка сервера: ${result.message || 'невідома помилка'}`);
             }
         } catch (e) {
-            alert('Помилка зв’язку з сервером при пінзі.');
+            alert('Помилка мережі (CORS або URL не відповідає).');
         }
     }
 
