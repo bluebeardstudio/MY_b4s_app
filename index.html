@@ -121,9 +121,25 @@
             font-weight: bold;
             cursor: pointer;
             transition: opacity 0.2s;
+            margin-bottom: 10px;
         }
         button.submit-btn:active {
             opacity: 0.8;
+        }
+        .push-enable-btn {
+            width: 100%;
+            padding: 10px;
+            background: #1e293b;
+            border: 1px dashed var(--accent);
+            color: var(--accent);
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: background 0.2s;
+        }
+        .push-enable-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
         }
         
         .admin-panel {
@@ -332,12 +348,15 @@
         <textarea id="task" rows="3" placeholder="Що плануєте робити..." required></textarea>
 
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
+        
+        <!-- Кнопка активації сповіщень для конкретного девайса -->
+        <button type="button" class="push-enable-btn" onclick="initPushNotifications()">🔔 Увімкнути нагадування на цьому пристрої</button>
     </form>
     
     <div id="status-message"></div>
 
     <!-- Індикатор версії -->
-    <div class="app-version">v1.5.00</div>
+    <div class="app-version">v1.5.01</div>
 </div>
 
 <!-- Підключення Firebase SDK через CDN -->
@@ -360,8 +379,14 @@
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    // Запит дозволу на пуші та отримання FCM токена при завантаженні/вході
+    // Запит дозволу на пуші, отримання токена та прив'язка до імені
     async function initPushNotifications() {
+        const selectedName = document.getElementById('name').value;
+        if (!selectedName) {
+            alert('Спершу оберіть своє прізвище у формі вище, а потім увімкніть сповіщення!');
+            return;
+        }
+
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
@@ -369,12 +394,22 @@
                     vapidKey: "BBsMcXvFLlyj2kBm7rd3-dDw_JhURhVQfFNTqQwEKKNP9k7VohyWT053G6CGlB6NQZa_D6bjtojXs_rbSv_L39k"
                 });
                 console.log('FCM Token пристрою:', token);
-                // Тут у майбутньому можна буде відправляти цей токен на сервер, щоб зберігати в таблиці для розсилки
+
+                // Надсилаємо токен і прізвище на Google Apps Script для збереження
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'saveToken', name: selectedName, token: token })
+                });
+
+                alert(`Пристрій успішно зареєстровано для ${selectedName}!`);
             } else {
-                console.log('Користувач заборонив сповіщення');
+                alert('Дозвіл на сповіщення було відхилено в налаштуваннях браузера.');
             }
         } catch (error) {
-            console.error('Помилка отримання токена сповіщень:', error);
+            console.error('Помилка реєстрації пристрою:', error);
+            alert('Помилка отримання токена сповіщень.');
         }
     }
 
@@ -407,7 +442,6 @@
             loadAdminReportStatus();
             renderAdminTeamList();
             populateAdminSelects();
-            initPushNotifications(); // Запитуємо дозвіл та ініціалізуємо пуші в адмінці
         } else {
             btn.classList.remove('active');
             panel.classList.remove('visible');
@@ -478,7 +512,7 @@
     }
 
     function pingMember(name) {
-        alert(`Сигнал нагадування для ${name} активовано через систему пушів!`);
+        alert(`Функцію ручного пінгу для ${name} буде підключено до бекенду розсилки на наступному кроці!`);
     }
 
     function renderAdminTeamList() {
