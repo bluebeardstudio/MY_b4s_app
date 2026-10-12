@@ -383,7 +383,7 @@
     async function submitBcsReport() {
         const statusMsg = document.getElementById('status-message');
         statusMsg.style.color = '#f59e0b';
-        statusMsg.textContent = '⏳ Перевірка звітів особового складу...';
+        statusMsg.textContent = '⏳ Формування зведеного звіту БЧС...';
 
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getBcsReport`);
@@ -395,12 +395,13 @@
                 return;
             }
 
-            window.open(result.sheetUrl, '_blank');
+            // Открываем сгенерированный чистый PDF-отчет конкретного листа Final_B4S
+            window.open(result.reportUrl, '_blank');
             statusMsg.style.color = '#22c55e';
-            statusMsg.textContent = '✅ БЧС успішно перевірено та відкрито!';
+            statusMsg.textContent = '✅ Звіт БЧС успішно сформовано!';
         } catch (e) {
             statusMsg.style.color = '#ef4444';
-            statusMsg.textContent = '❌ Помилка перевірки звіту.';
+            statusMsg.textContent = '❌ Помилка формування звіту.';
         }
     }
 
