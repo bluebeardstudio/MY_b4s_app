@@ -1,0 +1,68 @@
+name: Send Web Push
+
+on:
+  repository_dispatch:
+    types: [ping-trigger]
+
+jobs:
+  send-notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install web-push
+        run: npm install web-push
+
+      - name: Run Push Script
+        env:
+          GAS_URL: ${{ secrets.GAS_WEB_APP_URL }}
+          TARGET_NAME: ${{ github.event.client_payload.name }}
+          VAPID_PUBLIC: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE_KEY }}
+        run: |
+          node -e '
+            const webpush = require("web-push");
+            
+            async function run() {
+              const targetName = process.env.TARGET_NAME;
+              const gasUrl = process.env.GAS_URL;
+              
+              if (!targetName) {
+                console.log("Не вказано імʼя для пінгу");
+                return;
+              }
+
+              // Забираємо токен з GAS
+              const response = await fetch(`${gasUrl}?action=pingMember&name=${encodeURIComponent(targetName)}`);
+              const data = await response.json();
+              
+              if (data.status !== "success" || !data.token) {
+                console.log("Токен бійця не знайдено в базі");
+                return;
+              }
+              
+              const subscription = JSON.parse(data.token);
+              
+              webpush.setVapidDetails(
+                "mailto:admin@b4s.local",
+                process.env.VAPID_PUBLIC,
+                process.env.VAPID_PRIVATE
+              );
+              
+              const payload = JSON.stringify({
+                title: "Нагадування БЧС 🔔",
+                body: `${targetName}, терміново подайте план на завтра!`
+              });
+              
+              try {
+                await webpush.sendNotification(subscription, payload);
+                console.log("Пуш успішно надіслано для " + targetName);
+              } catch (err) {
+                console.error("Помилка відправки пуша:", err);
+              }
+            }
+            run();
+          '
