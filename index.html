@@ -376,10 +376,10 @@
         appId: "1:586519224072:web:29630b02673cb5c50bd6bd"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+    const app = firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging(app);
 
-    // Запит дозволу на пуші, отримання токена та прив'язка до імені (з урахуванням шляху репозиторію)
+    // Запит дозволу на пуші, отримання токена та прив'язка до імені
     async function initPushNotifications() {
         const selectedName = document.getElementById('name').value;
         if (!selectedName) {
@@ -390,7 +390,7 @@
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                // Явно реєструємо сервіс-воркер з урахуванням назви репозиторію MY_b4s_app
+                // Реєструємо сервіс-воркер явно з правильним шляхом для GitHub Pages
                 const swRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
                 
                 const token = await messaging.getToken({
