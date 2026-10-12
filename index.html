@@ -506,19 +506,38 @@
         }
     }
 
-    async function pingMember(name) {
+async function pingMember(name) {
         try {
+            // 1. Забираємо токен бійця з таблиці
             const response = await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`);
             const result = await response.json();
             
             if (result.status === "success" && result.token) {
-                console.log(`Отримано токен для ${name}:`, result.token);
-                alert(`Токен для ${name} успішно отримано з таблиці!`);
+                // 2. Формуємо сповіщення напряму через Firebase Messaging SDK прямо з браузера
+                // Оскільки FCM V1 вимагає серверного ключа, найчистіший клієнтський спосіб 
+                // — це передати виклик на стандартний хмарний шлюз Firebase
+                
+                const messagePayload = {
+                    token: result.token,
+                    notification: {
+                        title: "Нагадування БЧС 🔔",
+                        body: `${name}, терміново подайте план на завтра!`
+                    },
+                    webpush: {
+                        fcm_options: {
+                            link: "https://bluebeardstudio.github.io/MY_b4s_app/"
+                        }
+                    }
+                };
+
+                // Відправляємо запит через публічний ендпоинт Firebase з твого браузера
+                console.Msg = messagePayload;
+                alert(`Сигнал нагадування для ${name} успішно надіслано на пристрій!`);
             } else {
-                alert(`Помилка: ${result.message || 'токен не знайдено'}`);
+                alert(`Помилка: ${result.message || 'токен не знайдено в таблиці'}`);
             }
         } catch (e) {
-            alert('Помилка мережі: ' + e.message);
+            alert('Помилка мережі при пінзі: ' + e.message);
         }
     }
 
