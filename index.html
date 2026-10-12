@@ -379,7 +379,7 @@
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    // Запит дозволу на пуші, отримання токена та прив'язка до імені
+    // Запит дозволу на пуші, отримання токена та прив'язка до імені (з урахуванням шляху репозиторію)
     async function initPushNotifications() {
         const selectedName = document.getElementById('name').value;
         if (!selectedName) {
@@ -390,8 +390,12 @@
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
+                // Явно реєструємо сервіс-воркер з урахуванням назви репозиторію MY_b4s_app
+                const swRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+                
                 const token = await messaging.getToken({
-                    vapidKey: "BBsMcXvFLlyj2kBm7rd3-dDw_JhURhVQfFNTqQwEKKNP9k7VohyWT053G6CGlB6NQZa_D6bjtojXs_rbSv_L39k"
+                    vapidKey: "BBsMcXvFLlyj2kBm7rd3-dDw_JhURhVQfFNTqQwEKKNP9k7VohyWT053G6CGlB6NQZa_D6bjtojXs_rbSv_L39k",
+                    serviceWorkerRegistration: swRegistration
                 });
                 console.log('FCM Token пристрою:', token);
 
@@ -409,7 +413,7 @@
             }
         } catch (error) {
             console.error('Помилка реєстрації пристрою:', error);
-            alert('Помилка: ' + error.message); // Виводимо реальний текст помилки на екран телефону
+            alert('Помилка: ' + error.message);
         }
     }
 
