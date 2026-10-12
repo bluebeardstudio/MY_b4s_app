@@ -1,11 +1,12 @@
-name: Send Web Push
+name: B4S Daily Push and Check
 
 on:
-  repository_dispatch:
-    types: [ping-trigger]
+  schedule:
+    - cron: '0 18 * * *' # Запускається щодня о 18:00 UTC (можеш змінити під свій час)
+  workflow_dispatch:      # Дозволяє адміну натиснути кнопку «Run workflow» вручну в один клік у GitHub
 
 jobs:
-  send-notification:
+  check-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Node.js
@@ -16,10 +17,9 @@ jobs:
       - name: Install web-push
         run: npm install web-push
 
-      - name: Run Push Script
+      - name: Run Check & Push Script
         env:
           GAS_URL: ${{ secrets.GAS_WEB_APP_URL }}
-          TARGET_NAME: ${{ github.event.client_payload.name }}
           VAPID_PUBLIC: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE_KEY }}
         run: |
@@ -27,41 +27,51 @@ jobs:
             const webpush = require("web-push");
             
             async function run() {
-              const targetName = process.env.TARGET_NAME;
               const gasUrl = process.env.GAS_URL;
               
-              if (!targetName) {
-                console.log("Не вказано імʼя для пінгу");
+              if (!gasUrl) {
+                console.error("Помилка: Не вказано GAS_URL у секретах");
                 return;
               }
 
-              // Забираємо токен з GAS
-              const response = await fetch(`${gasUrl}?action=pingMember&name=${encodeURIComponent(targetName)}`);
-              const data = await response.json();
-              
-              if (data.status !== "success" || !data.token) {
-                console.log("Токен бійця не знайдено в базі");
-                return;
-              }
-              
-              const subscription = JSON.parse(data.token);
-              
-              webpush.setVapidDetails(
-                "mailto:admin@b4s.local",
-                process.env.VAPID_PUBLIC,
-                process.env.VAPID_PRIVATE
-              );
-              
-              const payload = JSON.stringify({
-                title: "Нагадування БЧС 🔔",
-                body: `${targetName}, терміново подайте план на завтра!`
-              });
-              
+              console.Hologram || console.log("Опитування Google Apps Script щодо статусу оновлень о 18:00...");
+
               try {
-                await webpush.sendNotification(subscription, payload);
-                console.log("Пуш успішно надіслано для " + targetName);
-              } catch (err) {
-                console.error("Помилка відправки пуша:", err);
+                // Запитуємо у GAS список бійців, які не здали план або потребують пінгу
+                const response = await fetch(`${gasUrl}?action=checkStatus`);
+                const data = await response.json();
+                
+                if (data.status !== "success" || !data.targets || data.targets.length === 0) {
+                  console.log("Усі молодці, оновлення є. Пуші не потрібні.");
+                  return;
+                }
+
+                webpush.setVapidDetails(
+                  "mailto:admin@b4s.local",
+                  process.env.VAPID_PUBLIC,
+                  process.env.VAPID_PRIVATE
+                );
+
+                // Перебираємо кожного, хто не здав звіт, і шлемо пуш
+                for (const target of data.targets) {
+                  if (!target.token) continue;
+                  
+                  const subscription = JSON.parse(target.token);
+                  const payload = JSON.stringify({
+                    title: "Нагадування БЧС 🔔",
+                    body: `${target.name}, терміново подайте план на завтра!`
+                  });
+                  
+                  try {
+                    await webpush.sendNotification(subscription, payload);
+                    console.log(`Пуш успішно надіслано бійцю: ${target.name}`);
+                  } catch (err) {
+                    console.error(`Помилка відправки для ${target.name}:`, err.message);
+                  }
+                }
+
+              } catch (e) {
+                console.error("Помилка звʼязку з GAS:", e);
               }
             }
             run();
