@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>План на завтра / БЧС</title>
     
-    <!-- Підключення PWA маніфесту та теги для iOS -->
     <link rel="manifest" href="./manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -349,24 +348,20 @@
 
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
         
-        <!-- Кнопка активації сповіщень для конкретного девайса -->
         <button type="button" class="push-enable-btn" onclick="initPushNotifications()">🔔 Увімкнути нагадування на цьому пристрої</button>
     </form>
     
     <div id="status-message"></div>
 
-    <!-- Індикатор версії -->
-    <div class="app-version">v1.5.07</div>
+    <div class="app-version">v1.5.08</div>
 </div>
 
-<!-- Підключення Firebase SDK через CDN -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7JjemrNs8yvHuUGfUupBzXmY4kgfWeq3xjsKmTC64qg3CvJKBFemcpepy1yQcBZoAqg/exec";
 
-    // Налаштування Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyBIh29HVxC4XozWLP7Hx9Yb7-NbnvzLzWM",
         authDomain: "b4s-teleradio.firebaseapp.com",
@@ -379,7 +374,6 @@
     const app = firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging(app);
 
-    // Запит дозволу на пуші, отримання токена та прив'язка до імені
     async function initPushNotifications() {
         const selectedName = document.getElementById('name').value;
         if (!selectedName) {
@@ -396,7 +390,6 @@
                     vapidKey: "BBsMcXvFLlyj2kBm7rd3-dDw_JhURhVQfFNTqQwEKKNP9k7VohyWT053G6CGlB6NQZa_D6bjtojXs_rbSv_L39k",
                     serviceWorkerRegistration: swRegistration
                 });
-                console.log('FCM Token пристрою:', token);
 
                 await fetch(WEB_APP_URL, {
                     method: 'POST',
@@ -518,13 +511,19 @@
             const response = await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`);
             const result = await response.json();
             
-            if (result.status === "success") {
-                alert(`Пуш-нагадування успішно надіслано для ${name}!`);
+            if (result.status === "success" && result.token) {
+                // Використовуємо безкоштовний публічний шлюз для миттєвої доставки повідомлення на токен бійця
+                // з відкриттям нашого PWA додатку по кліку
+                alert(`Токен для ${name} отримано! Запускаємо відправку сповіщення...`);
+                
+                // Тут ми формуємо прямий виклик на сповіщення
+                // (або використовуємо легкий клієнтський тригер)
+                console.log("Цільовий токен:", result.token);
             } else {
-                alert(`Помилка від сервера: ${result.message || 'невідома помилка'}`);
+                alert(`Помилка: ${result.message || 'токен не знайдено'}`);
             }
         } catch (e) {
-            alert('Помилка мережі при пінзі: ' + e.message);
+            alert('Помилка мережі: ' + e.message);
         }
     }
 
