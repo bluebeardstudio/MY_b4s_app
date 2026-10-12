@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>План на завтра</title>
+    <title>План на завтра / БЧС</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -28,7 +28,7 @@
         }
         .container {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             background: var(--card-bg);
             padding: 24px;
             border-radius: 16px;
@@ -44,7 +44,7 @@
         }
         h2 {
             margin: 0;
-            font-size: 22px;
+            font-size: 20px;
         }
         .admin-toggle {
             background: none;
@@ -88,7 +88,7 @@
             background: #0f172a;
             color: #fff;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
@@ -116,40 +116,81 @@
         button.submit-btn:active {
             opacity: 0.8;
         }
-        .admin-box {
+        
+        /* Секция админки */
+        .admin-panel {
             background: #0f172a;
-            border: 1px dashed var(--admin-color);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
+            border: 1px solid var(--admin-color);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 20px;
             display: none;
         }
-        .admin-box.visible {
+        .admin-panel.visible {
             display: block;
         }
-        .team-manage-list {
-            max-height: 150px;
+        .admin-main-action {
+            margin-bottom: 14px;
+        }
+        .bcs-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--admin-color);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* Выпадающие меню (аккордеон) */
+        .accordion {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            padding: 10px 14px;
+            width: 100%;
+            text-align: left;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+        .accordion-content.open {
+            max-height: 250px;
             overflow-y: auto;
-            margin-top: 10px;
-            border-top: 1px solid #334155;
-            padding-top: 8px;
+            margin-bottom: 10px;
         }
         .team-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 14px;
+            font-size: 13px;
             margin-bottom: 6px;
             background: #1e293b;
             padding: 6px 10px;
             border-radius: 6px;
+            border: 1px solid #334155;
         }
-        .delete-btn {
+        .x-btn {
             background: none;
             border: none;
             color: var(--danger);
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 0 4px;
         }
         #status-message {
             text-align: center;
@@ -166,24 +207,45 @@
         <button class="admin-toggle" id="adminToggleBtn" onclick="toggleAdminMode()">⚙️ Адмін</button>
     </div>
     
-    <!-- Панель админа: управление командой -->
-    <div class="admin-box" id="adminBox">
-        <label style="color: var(--admin-color); margin-bottom: 6px;">👑 Керування складом команди:</label>
-        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <input type="text" id="newMemberName" placeholder="Нове ім'я..." style="margin-bottom: 0; padding: 8px;">
-            <button type="button" onclick="addTeamMember()" style="background: var(--admin-color); border: none; color: #000; padding: 0 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">Додати</button>
+    <!-- Панель админа -->
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-main-action">
+            <label style="color: var(--admin-color); margin-bottom: 6px;">📋 Головне:</label>
+            <button type="button" class="bcs-btn" onclick="submitBcsReport()">📤 Подати БЧС черговому</button>
         </div>
-        <div class="team-manage-list" id="teamManageList"></div>
+
+        <!-- Меню 1: Список (управление людьми) -->
+        <button type="button" class="accordion" onclick="toggleAccordion('teamAccordion')">
+            <span>👥 Список особового складу</span> <span>▼</span>
+        </button>
+        <div class="accordion-content" id="teamAccordion">
+            <div style="display: flex; gap: 6px; margin: 8px 0;">
+                <input type="text" id="newMemberName" placeholder="Прізвище ім'я..." style="margin-bottom: 0; padding: 8px; font-size: 14px;">
+                <button type="button" onclick="addTeamMember()" style="background: var(--admin-color); border: none; color: #000; padding: 0 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">+</button>
+            </div>
+            <div id="teamManageList"></div>
+        </div>
+
+        <!-- Меню 2: Подать за другого -->
+        <button type="button" class="accordion" onclick="toggleAccordion('otherAccordion')">
+            <span>📝 Подати БЧС за іншого</span> <span>▼</span>
+        </button>
+        <div class="accordion-content" id="otherAccordion">
+            <label style="font-size: 12px; margin-bottom: 4px;">Оберіть військовослужбовця:</label>
+            <select id="adminTargetName" style="padding: 8px; font-size: 14px; margin-bottom: 8px;">
+                <option value="" disabled selected>Оберіть...</option>
+            </select>
+            <button type="button" onclick="submitForOther()" style="width:100%; padding: 8px; background: #334155; color: #fff; border:none; border-radius:6px; cursor:pointer; font-size:13px;">Зберегти звіт за нього</button>
+        </div>
     </div>
 
+    <!-- Основная форма сотрудника -->
     <form id="planForm">
-        <!-- Выбор сотрудника -->
-        <label for="name">Співробітник:</label>
+        <label for="name">Військовослужбовець:</label>
         <select id="name" required>
             <option value="" disabled selected>Завантаження списку...</option>
         </select>
 
-        <!-- Статусы (синхронизированы с таблицей) -->
         <label>Статус / Локація:</label>
         <div class="status-grid">
             <div class="status-btn" data-value="Дистанційно">🏠 Дистанційно</div>
@@ -194,7 +256,6 @@
         </div>
         <input type="hidden" id="location" required>
 
-        <!-- Задача -->
         <label for="task">Коротко задачу на завтра:</label>
         <textarea id="task" rows="3" placeholder="Що плануєте робити..." required></textarea>
 
@@ -213,20 +274,22 @@
     function toggleAdminMode() {
         isAdmin = !isAdmin;
         const btn = document.getElementById('adminToggleBtn');
-        const box = document.getElementById('adminBox');
-        const nameSelect = document.getElementById('name');
+        const panel = document.getElementById('adminPanel');
         
         if (isAdmin) {
             btn.classList.add('active');
-            box.classList.add('visible');
+            panel.classList.add('visible');
             renderAdminTeamList();
-            loadTeamMembers(localStorage.getItem('b4s_user_name'));
+            populateAdminSelects();
         } else {
             btn.classList.remove('active');
-            box.classList.remove('visible');
-            const savedName = localStorage.getItem('b4s_user_name');
-            if (savedName) nameSelect.value = savedName;
+            panel.classList.remove('visible');
         }
+    }
+
+    function toggleAccordion(id) {
+        const content = document.getElementById(id);
+        content.classList.toggle('open');
     }
 
     async function loadTeamMembers(preselectName = null) {
@@ -248,9 +311,10 @@
             }
             if (isAdmin) {
                 renderAdminTeamList();
+                populateAdminSelects();
             }
         } catch (e) {
-            nameSelect.innerHTML = '<option value="" disabled selected>Помилка завантаження списку</option>';
+            nameSelect.innerHTML = '<option value="" disabled selected>Помилка завантаження</option>';
         }
     }
 
@@ -266,9 +330,20 @@
             item.className = 'team-item';
             item.innerHTML = `
                 <span>${name}</span>
-                <button type="button" class="delete-btn" onclick="removeTeamMember('${name}')">❌ Видалити</button>
+                <button type="button" class="x-btn" onclick="removeTeamMember('${name}')" title="Видалити">×</button>
             `;
             listContainer.appendChild(item);
+        });
+    }
+
+    function populateAdminSelects() {
+        const adminSelect = document.getElementById('adminTargetName');
+        adminSelect.innerHTML = '<option value="" disabled selected>Оберіть...</option>';
+        currentTeamNames.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            adminSelect.appendChild(opt);
         });
     }
 
@@ -292,8 +367,6 @@
     }
 
     async function removeTeamMember(name) {
-        if (!confirm(`Видалити ${name} зі списку команди?`)) return;
-
         try {
             await fetch(WEB_APP_URL, {
                 method: 'POST',
@@ -304,6 +377,59 @@
             setTimeout(async () => { await loadTeamMembers(); }, 1000);
         } catch (e) {
             alert('Помилка видалення');
+        }
+    }
+
+    // Подача БЧС черговому (скачивание файла отчета)
+    async function submitBcsReport() {
+        const statusMsg = document.getElementById('status-message');
+        statusMsg.style.color = '#f59e0b';
+        statusMsg.textContent = '⏳ Перевірка звітів та формування файлу...';
+
+        try {
+            // Запрашиваем у бэкенда экспорт листа Final_B4S
+            const response = await fetch(`${WEB_APP_URL}?action=getBcsReport`);
+            const result = await response.json();
+
+            if (!result.ready) {
+                alert(`⚠️ Увага! Не всі подали звіти.\n\nЩе не здали: ${result.missing.join(', ')}`);
+                statusMsg.textContent = '❌ Подача відкладена: є заборгованість по звітах.';
+                return;
+            }
+
+            // Если все на месте — скачиваем файл `.xls` напрямую по ссылке экспорта Google Sheets
+            window.location.href = result.downloadUrl;
+            statusMsg.style.color = '#22c55e';
+            statusMsg.textContent = '✅ БЧС успішно сформовано та завантажено!';
+        } catch (e) {
+            statusMsg.style.color = '#ef4444';
+            statusMsg.textContent = '❌ Помилка формування звіту.';
+        }
+    }
+
+    async function submitForOther() {
+        const targetName = document.getElementById('adminTargetName').value;
+        if (!targetName) {
+            alert('Оберіть військовослужбовця!');
+            return;
+        }
+        const task = prompt(`Введіть задачу для ${targetName}:`, 'Виконання службових обов\'язків');
+        if (!task) return;
+
+        // По умолчанию ставим статус ППД или запрашиваем
+        const location = prompt(`Оберіть статус для ${targetName} (Дистанційно, ППД, Лікування, Відрядження, Відпустка):`, 'ППД');
+        if (!location) return;
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: targetName, location: location, task: task })
+            });
+            alert(`✅ Звіт за ${targetName} успішно записано!`);
+        } catch (e) {
+            alert('Помилка надсилання');
         }
     }
 
@@ -380,11 +506,10 @@
             }
 
             statusMessage.style.color = '#22c55e';
-            statusMessage.textContent = isAdmin ? `✅ Звіт за ${selectedName} успішно надіслано!` : '✅ Звіт успішно надіслано! Дякуємо.';
-            
+            statusMessage.textContent = '✅ Звіт успішно надіслано! Дякуємо.';
         } catch (error) {
             statusMessage.style.color = '#ef4444';
-            statusMessage.textContent = '❌ Помилка надсилання. Спробуйте ще раз.';
+            statusMessage.textContent = '❌ Помилка надсилання.';
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Надіслати звіт';
