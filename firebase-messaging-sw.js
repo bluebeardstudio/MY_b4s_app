@@ -7,7 +7,7 @@ firebase.initializeApp({
   projectId: "b4s-teleradio",
   storageBucket: "b4s-teleradio.firebasestorage.app",
   messagingSenderId: "586519224072",
-  appId: "1:586519224072:web:29630b02673cb5c50bd6bd
+  appId: "1:586519224072:web:29630b02673cb5c50bd6bd"
 });
 
 const messaging = firebase.messaging();
