@@ -252,7 +252,6 @@
             font-size: 14px;
         }
         
-        /* Стиль для індикатора версії внизу */
         .app-version {
             text-align: center;
             margin-top: 20px;
@@ -266,14 +265,14 @@
 
 <div class="container">
     <div class="header-flex">
-        <h2 id="form-title">План на завтра ⚡️</h2>
-        <button class="admin-toggle" id="adminToggleBtn" onclick="toggleAdminMode()">⚙️ Адмін</button>
+        <h2 id="form-title">План на завтра</h2>
+        <button class="admin-toggle" id="adminToggleBtn" onclick="toggleAdminMode()">Адмін</button>
     </div>
     
     <div class="admin-panel" id="adminPanel">
-        <label style="color: var(--admin-color); margin-bottom: 6px; font-weight: bold;">📋 Керування звітом БЧС:</label>
+        <label style="color: var(--admin-color); margin-bottom: 6px; font-weight: bold;">Керування звітом БЧС:</label>
         
-        <button type="button" class="bcs-btn" onclick="submitBcsReport()">📤 Подати БЧС черговому</button>
+        <button type="button" class="bcs-btn" onclick="submitBcsReport()">Подати БЧС черговому</button>
         <button type="button" class="refresh-btn" onclick="refreshAppData()">🔄 Оновити сторінку та дані</button>
 
         <label style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Статус звітів особового складу за сьогодні:</label>
@@ -282,7 +281,7 @@
         </div>
 
         <button type="button" class="accordion" onclick="toggleAccordion('teamAccordion')">
-            <span>👥 Особовий склад (додати/видалити)</span> <span>▼</span>
+            <span>Список особового складу</span> <span>▼</span>
         </button>
         <div class="accordion-content" id="teamAccordion">
             <div style="display: flex; gap: 6px; margin-bottom: 6px;">
@@ -293,7 +292,7 @@
         </div>
 
         <button type="button" class="accordion" onclick="toggleAccordion('otherAccordion')">
-            <span>📝 Подати за іншого військовослужбовця</span> <span>▼</span>
+            <span>Подати за іншого військовослужбовця</span> <span>▼</span>
         </button>
         <div class="accordion-content" id="otherAccordion">
             <label style="font-size: 11px; margin-bottom: 2px;">Оберіть бійця:</label>
@@ -338,7 +337,7 @@
     <div id="status-message"></div>
 
     <!-- Індикатор версії -->
-    <div class="app-version">v1.4</div>
+    <div class="app-version">v1.4.01</div>
 </div>
 
 <script>
@@ -377,7 +376,7 @@
             btn.classList.add('active');
             panel.classList.add('visible');
             form.style.display = 'none';
-            formTitle.textContent = '👑 Панель управління БЧС';
+            formTitle.textContent = 'Панель управління БЧС';
             loadAdminReportStatus();
             renderAdminTeamList();
             populateAdminSelects();
@@ -385,7 +384,7 @@
             btn.classList.remove('active');
             panel.classList.remove('visible');
             form.style.display = 'block';
-            formTitle.textContent = 'План на завтра ⚡️';
+            formTitle.textContent = 'План на завтра';
         }
     }
 
@@ -451,7 +450,7 @@
     }
 
     function pingMember(name) {
-        alert(`🔔 Надіслано сигнал нагадування для: ${name}`);
+        alert(`Надіслано сигнал нагадування для: ${name}`);
     }
 
     function renderAdminTeamList() {
@@ -521,15 +520,15 @@
     async function submitBcsReport() {
         const statusMsg = document.getElementById('status-message');
         statusMsg.style.color = '#f59e0b';
-        statusMsg.textContent = '⏳ Перевірка звітів особового складу...';
+        statusMsg.textContent = 'Перевірка звітів особового складу...';
 
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getBcsReport`);
             const result = await response.json();
 
             if (!result.ready) {
-                alert(`⚠️ Увага! Не всі подали звіти ЗА СЬОГОДНІ.\n\nЩе не здали: ${result.missing.join(', ')}`);
-                statusMsg.textContent = '❌ Подача відкладена: є заборгованість по звітах.';
+                alert(`Увага! Не всі подали звіти ЗА СЬОГОДНІ.\n\nЩе не здали: ${result.missing.join(', ')}`);
+                statusMsg.textContent = 'Подача відкладена: є заборгованість по звітах.';
                 loadAdminReportStatus();
                 return;
             }
@@ -537,10 +536,10 @@
             window.open(result.reportUrl, '_blank');
 
             statusMsg.style.color = '#22c55e';
-            statusMsg.textContent = '✅ Звіт БЧС успішно сформовано та відкрито!';
+            statusMsg.textContent = 'Звіт БЧС успішно сформовано та відкрито!';
         } catch (e) {
             statusMsg.style.color = '#ef4444';
-            statusMsg.textContent = '❌ Помилка формування звіту.';
+            statusMsg.textContent = 'Помилка формування звіту.';
         }
     }
 
@@ -566,7 +565,7 @@
                 body: JSON.stringify({ name: targetName, location: targetStatus, task: targetTask })
             });
             document.getElementById('adminTargetTask').value = '';
-            alert(`✅ Звіт за ${targetName} успішно записано на сьогодні!`);
+            alert(`Звіт за ${targetName} успішно записано на сьогодні!`);
             await loadAdminReportStatus();
         } catch (e) {
             alert('Помилка надсилання');
@@ -646,10 +645,10 @@
             }
 
             statusMessage.style.color = '#22c55e';
-            statusMessage.textContent = '✅ Звіт успішно надіслано! Дякуємо.';
+            statusMessage.textContent = 'Звіт успішно надіслано! Дякуємо.';
         } catch (error) {
             statusMessage.style.color = '#ef4444';
-            statusMessage.textContent = '❌ Помилка надсилання.';
+            statusMessage.textContent = 'Помилка надсилання.';
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Надіслати звіт';
