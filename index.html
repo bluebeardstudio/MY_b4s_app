@@ -12,6 +12,7 @@
             --accent: #3b82f6;
             --accent-hover: #2563eb;
             --success: #22c55e;
+            --admin-color: #f59e0b;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -33,12 +34,30 @@
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             box-sizing: border-box;
+            position: relative;
+        }
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
         h2 {
-            margin-top: 0;
+            margin: 0;
             font-size: 22px;
-            text-align: center;
-            margin-bottom: 20px;
+        }
+        .admin-toggle {
+            background: none;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .admin-toggle.active {
+            border-color: var(--admin-color);
+            color: var(--admin-color);
         }
         label {
             display: block;
@@ -94,6 +113,17 @@
         button.submit-btn:active {
             opacity: 0.8;
         }
+        .admin-box {
+            background: #0f172a;
+            border: 1px dashed var(--admin-color);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .admin-box.visible {
+            display: block;
+        }
         #status-message {
             text-align: center;
             margin-top: 15px;
@@ -104,19 +134,25 @@
 <body>
 
 <div class="container">
-    <h2>План на завтра ⚡️</h2>
+    <div class="header-flex">
+        <h2 id="form-title">План на завтра ⚡️</h2>
+        <button class="admin-toggle" id="adminToggleBtn" onclick="toggleAdminMode()">⚙️ Адмін</button>
+    </div>
     
+    <!-- Панель админа: выбор за кого отправляем -->
+    <div class="admin-box" id="adminBox">
+        <label style="color: var(--admin-color); margin-bottom: 4px;">👑 Режим адміністратора:</label>
+        <span style="font-size: 12px; color: #94a3b8;">Ви надсилаєте звіт від імені обраного співробітника.</span>
+    </div>
+
     <form id="planForm">
         <!-- Выбор сотрудника -->
-        <label for="name">Ваше прізвище / ім'я:</label>
+        <label for="name">Співробітник:</label>
         <select id="name" required>
-            <option value="" disabled selected>Оберіть зі списку...</option>
-            <option value="Вова Власенко">Вова Власенко</option>
-            <option value="Співробітник 2">Співробітник 2</option>
-            <option value="Співробітник 3">Співробітник 3</option>
+            <option value="" disabled selected>Завантаження списку...</option>
         </select>
 
-        <!-- Выбор локации / статуса -->
+        <!-- Статус -->
         <label>Статус / Локація:</label>
         <div class="status-grid">
             <div class="status-btn" data-value="Дистанційно">🏠 Дистанційно</div>
@@ -126,11 +162,10 @@
         </div>
         <input type="hidden" id="location" required>
 
-        <!-- Описание задачи -->
+        <!-- Задача -->
         <label for="task">Коротко задачу на завтра:</label>
         <textarea id="task" rows="3" placeholder="Що плануєте робити..." required></textarea>
 
-        <!-- Кнопка отправки -->
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
     </form>
     
@@ -138,29 +173,75 @@
 </div>
 
 <script>
-    // 1. При загрузке страницы проверяем, сохраняли ли имя и статус ранее
-    window.addEventListener('DOMContentLoaded', () => {
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7JjemrNs8yvHuUGfUupBzXmY4kgfWeq3xjsKmTC64qg3CvJKBFemcpepy1yQcBZoAqg/exec";
+
+    let isAdmin = false;
+
+    function toggleAdminMode() {
+        isAdmin = !isAdmin;
+        const btn = document.getElementById('adminToggleBtn');
+        const box = document.getElementById('adminBox');
+        const nameSelect = document.getElementById('name');
+        
+        if (isAdmin) {
+            btn.classList.add('active');
+            box.classList.add('visible');
+            // В режиме админа можно выбрать любого из списка, сбрасываем принудительный выбор сохраненного
+            loadTeamMembers(localStorage.getItem('b4s_user_name'));
+        } else {
+            btn.classList.remove('active');
+            box.classList.remove('visible');
+            const savedName = localStorage.getItem('b4s_user_name');
+            if (savedName) nameSelect.value = savedName;
+        }
+    }
+
+    // Загрузка списка команды из Google Таблицы
+    async function loadTeamMembers(preselectName = null) {
+        const nameSelect = document.getElementById('name');
+        try {
+            const response = await fetch(`${WEB_APP_URL}?action=getTeam`);
+            const names = await response.json();
+            
+            nameSelect.innerHTML = '<option value="" disabled selected>Оберіть зі списку...</option>';
+            names.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                nameSelect.appendChild(opt);
+            });
+
+            if (preselectName) {
+                nameSelect.value = preselectName;
+            }
+        } catch (e) {
+            nameSelect.innerHTML = '<option value="" disabled selected>Помилка завантаження списку</option>';
+        }
+    }
+
+    // Инициализация при загрузке страницы
+    window.addEventListener('DOMContentLoaded', async () => {
         const savedName = localStorage.getItem('b4s_user_name');
         const savedLocation = localStorage.getItem('b4s_user_location');
+        const savedTask = localStorage.getItem('b4s_user_task');
 
-        if (savedName) {
-            const nameSelect = document.getElementById('name');
-            nameSelect.value = savedName;
-        }
+        await loadTeamMembers(savedName);
 
         if (savedLocation) {
-            const locationInput = document.getElementById('location');
-            locationInput.value = savedLocation;
-            
+            document.getElementById('location').value = savedLocation;
             document.querySelectorAll('.status-btn').forEach(btn => {
                 if (btn.getAttribute('data-value') === savedLocation) {
                     btn.classList.add('active');
                 }
             });
         }
+
+        if (savedTask) {
+            document.getElementById('task').value = savedTask;
+        }
     });
 
-    // Логика выбора кнопок статуса
+    // Выбор статуса
     const statusBtns = document.querySelectorAll('.status-btn');
     const locationInput = document.getElementById('location');
 
@@ -172,16 +253,13 @@
         });
     });
 
-    // Обработка отправки формы
+    // Отправка формы
     const form = document.getElementById('planForm');
     const submitBtn = document.getElementById('submitBtn');
     const statusMessage = document.getElementById('status-message');
 
-    // Ваша рабочая ссылка на Apps Script
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7JjemrNs8yvHuUGfUupBzXmY4kgfWeq3xjsKmTC64qg3CvJKBFemcpepy1yQcBZoAqg/exec";
-
     form.addEventListener('submit', async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         
         if (!locationInput.value) {
             alert('Будь ласка, оберіть статус!');
@@ -190,11 +268,12 @@
 
         const selectedName = document.getElementById('name').value;
         const selectedLocation = locationInput.value;
+        const selectedTask = document.getElementById('task').value;
 
         const formData = {
             name: selectedName,
             location: selectedLocation,
-            task: document.getElementById('task').value
+            task: selectedTask
         };
 
         submitBtn.disabled = true;
@@ -202,24 +281,23 @@
         statusMessage.textContent = '';
 
         try {
-            const response = await fetch(WEB_APP_URL, {
+            await fetch(WEB_APP_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
 
-            // 2. Сохраняем выбор в память телефона для будущих визитов
-            localStorage.setItem('b4s_user_name', selectedName);
-            localStorage.setItem('b4s_user_location', selectedLocation);
+            // Сохраняем имя только если это обычный пользователь (не админская отправка за другого)
+            if (!isAdmin) {
+                localStorage.setItem('b4s_user_name', selectedName);
+                localStorage.setItem('b4s_user_location', selectedLocation);
+                localStorage.setItem('b4s_user_task', selectedTask);
+            }
 
             statusMessage.style.color = '#22c55e';
-            statusMessage.textContent = '✅ Звіт успішно надіслано! Дякуємо.';
+            statusMessage.textContent = isAdmin ? `✅ Звіт за ${selectedName} успішно надіслано!` : '✅ Звіт успішно надіслано! Дякуємо.';
             
-            // Не сбрасываем форму полностью, чтобы имя и статус оставались запомненными
-            document.getElementById('task').value = '';
         } catch (error) {
             statusMessage.style.color = '#ef4444';
             statusMessage.textContent = '❌ Помилка надсилання. Спробуйте ще раз.';
