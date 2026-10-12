@@ -10,9 +10,9 @@
             --card-bg: #1e293b;
             --text-color: #f8fafc;
             --accent: #3b82f6;
-            --accent-hover: #2563eb;
             --success: #22c55e;
             --admin-color: #f59e0b;
+            --danger: #ef4444;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -124,6 +124,30 @@
         .admin-box.visible {
             display: block;
         }
+        .team-manage-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border-top: 1px solid #334155;
+            padding-top: 8px;
+        }
+        .team-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            margin-bottom: 6px;
+            background: #1e293b;
+            padding: 6px 10px;
+            border-radius: 6px;
+        }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 14px;
+        }
         #status-message {
             text-align: center;
             margin-top: 15px;
@@ -139,10 +163,16 @@
         <button class="admin-toggle" id="adminToggleBtn" onclick="toggleAdminMode()">⚙️ Адмін</button>
     </div>
     
-    <!-- Панель админа: выбор за кого отправляем -->
+    <!-- Панель админа: управление командой -->
     <div class="admin-box" id="adminBox">
-        <label style="color: var(--admin-color); margin-bottom: 4px;">👑 Режим адміністратора:</label>
-        <span style="font-size: 12px; color: #94a3b8;">Ви надсилаєте звіт від імені обраного співробітника.</span>
+        <label style="color: var(--admin-color); margin-bottom: 6px;">👑 Керування складом команди:</label>
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="text" id="newMemberName" placeholder="Нове ім'я..." style="margin-bottom: 0; padding: 8px;">
+            <button type="button" onclick="addTeamMember()" style="background: var(--admin-color); border: none; color: #000; padding: 0 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">Додати</button>
+        </div>
+        <div class="team-manage-list" id="teamManageList">
+            <!-- Список динамически заполняется -->
+        </div>
     </div>
 
     <form id="planForm">
@@ -176,6 +206,7 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7JjemrNs8yvHuUGfUupBzXmY4kgfWeq3xjsKmTC64qg3CvJKBFemcpepy1yQcBZoAqg/exec";
 
     let isAdmin = false;
+    let currentTeamNames = [];
 
     function toggleAdminMode() {
         isAdmin = !isAdmin;
@@ -186,7 +217,7 @@
         if (isAdmin) {
             btn.classList.add('active');
             box.classList.add('visible');
-            // В режиме админа можно выбрать любого из списка, сбрасываем принудительный выбор сохраненного
+            renderAdminTeamList();
             loadTeamMembers(localStorage.getItem('b4s_user_name'));
         } else {
             btn.classList.remove('active');
@@ -201,10 +232,10 @@
         const nameSelect = document.getElementById('name');
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getTeam`);
-            const names = await response.json();
+            currentTeamNames = await response.json();
             
             nameSelect.innerHTML = '<option value="" disabled selected>Оберіть зі списку...</option>';
-            names.forEach(name => {
+            currentTeamNames.forEach(name => {
                 const opt = document.createElement('option');
                 opt.value = name;
                 opt.textContent = name;
@@ -214,8 +245,68 @@
             if (preselectName) {
                 nameSelect.value = preselectName;
             }
+            if (isAdmin) {
+                renderAdminTeamList();
+            }
         } catch (e) {
             nameSelect.innerHTML = '<option value="" disabled selected>Помилка завантаження списку</option>';
+        }
+    }
+
+    function renderAdminTeamList() {
+        const listContainer = document.getElementById('teamManageList');
+        listContainer.innerHTML = '';
+        if (currentTeamNames.length === 0) {
+            listContainer.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center;">Список порожній</div>';
+            return;
+        }
+        currentTeamNames.forEach(name => {
+            const item = document.createElement('div');
+            item.className = 'team-item';
+            item.innerHTML = `
+                <span>${name}</span>
+                <button type="button" class="delete-btn" onclick="removeTeamMember('${name}')">❌ Видалити</button>
+            `;
+            listContainer.appendChild(item);
+        });
+    }
+
+    async function addTeamMember() {
+        const input = document.getElementById('newMemberName');
+        const name = input.value.trim();
+        if (!name) return;
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'addMember', name: name })
+            });
+            input.value = '';
+            setTimeout(async () => {
+                await loadTeamMembers();
+            }, 1000); // Небольшая задержка на запись в таблицу
+        } catch (e) {
+            alert('Помилка додавання');
+        }
+    }
+
+    async function removeTeamMember(name) {
+        if (!confirm(`Видалити ${name} зі списку команди?`)) return;
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'removeMember', name: name })
+            });
+            setTimeout(async () => {
+                await loadTeamMembers();
+            }, 1000);
+        } catch (e) {
+            alert('Помилка видалення');
         }
     }
 
@@ -253,7 +344,7 @@
         });
     });
 
-    // Отправка формы
+    // Отправка формы отчета
     const form = document.getElementById('planForm');
     const submitBtn = document.getElementById('submitBtn');
     const statusMessage = document.getElementById('status-message');
@@ -288,7 +379,6 @@
                 body: JSON.stringify(formData)
             });
 
-            // Сохраняем имя только если это обычный пользователь (не админская отправка за другого)
             if (!isAdmin) {
                 localStorage.setItem('b4s_user_name', selectedName);
                 localStorage.setItem('b4s_user_location', selectedLocation);
