@@ -134,7 +134,22 @@
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .refresh-btn {
+            width: 100%;
+            padding: 10px;
+            background: #334155;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
             margin-bottom: 14px;
+            transition: background 0.2s;
+        }
+        .refresh-btn:active {
+            background: #475569;
         }
         
         .admin-report-box {
@@ -242,6 +257,7 @@
         <label style="color: var(--admin-color); margin-bottom: 6px; font-weight: bold;">📋 Керування звітом БЧС:</label>
         
         <button type="button" class="bcs-btn" onclick="submitBcsReport()">📤 Подати БЧС черговому</button>
+        <button type="button" class="refresh-btn" onclick="refreshAppData()">🔄 Оновити сторінку та дані</button>
 
         <label style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Статус звітів особового складу за сьогодні:</label>
         <div class="admin-report-box" id="adminReportList">
@@ -309,14 +325,28 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7JjemrNs8yvHuUGfUupBzXmY4kgfWeq3xjsKmTC64qg3CvJKBFemcpepy1yQcBZoAqg/exec";
 
     if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker зареєстровано:', reg.scope))
-            .catch(err => console.log('Помилка Service Worker:', err));
-    });
-}
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker зареєстровано:', reg.scope))
+                .catch(err => console.log('Помилка Service Worker:', err));
+        });
+    }
+
     let isAdmin = false;
     let currentTeamNames = [];
+
+    // Принудительное обновление приложения и сброс кеша
+    function refreshAppData() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+        // Перезагрузка с полным обходом кеша браузера
+        window.location.reload(true);
+    }
 
     function toggleAdminMode() {
         isAdmin = !isAdmin;
@@ -470,8 +500,7 @@
         }
     }
 
-    // Скачивание PDF-файла с принудительным правильным именем
-   async function submitBcsReport() {
+    async function submitBcsReport() {
         const statusMsg = document.getElementById('status-message');
         statusMsg.style.color = '#f59e0b';
         statusMsg.textContent = '⏳ Перевірка звітів особового складу...';
@@ -487,7 +516,6 @@
                 return;
             }
 
-            // Открываем готовый PDF-отчет листа Final_B4S
             window.open(result.reportUrl, '_blank');
 
             statusMsg.style.color = '#22c55e';
