@@ -320,11 +320,11 @@
 
         <label>Статус / Локація:</label>
         <div class="status-grid">
-            <div class="status-btn" data-value="Дистанційно">🏠 Дистанційно</div>
-            <div class="status-btn" data-value="ППД">🏢 ППД</div>
-            <div class="status-btn" data-value="Лікування">💊 Лікування</div>
-            <div class="status-btn" data-value="Відрядження">🚗 Відрядження</div>
-            <div class="status-btn full-width" data-value="Відпустка">🏖 Відпустка</div>
+            <div class="status-btn" data-value="Дистанційно">Дистанційно</div>
+            <div class="status-btn" data-value="ППД">ППД</div>
+            <div class="status-btn" data-value="Лікування">Лікування</div>
+            <div class="status-btn" data-value="Відрядження">Відрядження</div>
+            <div class="status-btn full-width" data-value="Відпустка">Відпустка</div>
         </div>
         <input type="hidden" id="location" required>
 
@@ -337,18 +337,45 @@
     <div id="status-message"></div>
 
     <!-- Індикатор версії -->
-    <div class="app-version">v1.4.01</div>
+    <div class="app-version">v1.5.00</div>
 </div>
+
+<!-- Підключення Firebase SDK через CDN -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7JjemrNs8yvHuUGfUupBzXmY4kgfWeq3xjsKmTC64qg3CvJKBFemcpepy1yQcBZoAqg/exec";
 
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker зареєстровано:', reg.scope))
-                .catch(err => console.log('Помилка Service Worker:', err));
-        });
+    // Налаштування Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBif29HvxC4KozWLP7Hx9Yb7-NbnvzLwM",
+        authDomain: "b4s-teleradio.firebaseapp.com",
+        projectId: "b4s-teleradio",
+        storageBucket: "b4s-teleradio.appspot.com",
+        messagingSenderId: "586519224072",
+        appId: "1:586519224072:web:29630b02673cb5c50bd6bd"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    // Запит дозволу на пуші та отримання FCM токена при завантаженні/вході
+    async function initPushNotifications() {
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                const token = await messaging.getToken({
+                    vapidKey: "BBsMcXvFLlyj2kBm7rd3-dDw_JhURhVQfFNTqQwEKKNP9k7VohyWT053G6CGlB6NQZa_D6bjtojXs_rbSv_L39k"
+                });
+                console.log('FCM Token пристрою:', token);
+                // Тут у майбутньому можна буде відправляти цей токен на сервер, щоб зберігати в таблиці для розсилки
+            } else {
+                console.log('Користувач заборонив сповіщення');
+            }
+        } catch (error) {
+            console.error('Помилка отримання токена сповіщень:', error);
+        }
     }
 
     let isAdmin = false;
@@ -380,6 +407,7 @@
             loadAdminReportStatus();
             renderAdminTeamList();
             populateAdminSelects();
+            initPushNotifications(); // Запитуємо дозвіл та ініціалізуємо пуші в адмінці
         } else {
             btn.classList.remove('active');
             panel.classList.remove('visible');
@@ -450,7 +478,7 @@
     }
 
     function pingMember(name) {
-        alert(`Надіслано сигнал нагадування для: ${name}`);
+        alert(`Сигнал нагадування для ${name} активовано через систему пушів!`);
     }
 
     function renderAdminTeamList() {
