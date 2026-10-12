@@ -380,14 +380,12 @@
         }
     }
 
-    // Подача БЧС черговому (скачивание файла отчета)
     async function submitBcsReport() {
         const statusMsg = document.getElementById('status-message');
         statusMsg.style.color = '#f59e0b';
-        statusMsg.textContent = '⏳ Перевірка звітів та формування файлу...';
+        statusMsg.textContent = '⏳ Перевірка звітів особового складу...';
 
         try {
-            // Запрашиваем у бэкенда экспорт листа Final_B4S
             const response = await fetch(`${WEB_APP_URL}?action=getBcsReport`);
             const result = await response.json();
 
@@ -397,13 +395,12 @@
                 return;
             }
 
-            // Если все на месте — скачиваем файл `.xls` напрямую по ссылке экспорта Google Sheets
-            window.location.href = result.downloadUrl;
+            window.open(result.sheetUrl, '_blank');
             statusMsg.style.color = '#22c55e';
-            statusMsg.textContent = '✅ БЧС успішно сформовано та завантажено!';
+            statusMsg.textContent = '✅ БЧС успішно перевірено та відкрито!';
         } catch (e) {
             statusMsg.style.color = '#ef4444';
-            statusMsg.textContent = '❌ Помилка формування звіту.';
+            statusMsg.textContent = '❌ Помилка перевірки звіту.';
         }
     }
 
@@ -416,7 +413,6 @@
         const task = prompt(`Введіть задачу для ${targetName}:`, 'Виконання службових обов\'язків');
         if (!task) return;
 
-        // По умолчанию ставим статус ППД или запрашиваем
         const location = prompt(`Оберіть статус для ${targetName} (Дистанційно, ППД, Лікування, Відрядження, Відпустка):`, 'ППД');
         if (!location) return;
 
