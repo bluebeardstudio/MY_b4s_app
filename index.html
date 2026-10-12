@@ -356,7 +356,7 @@
     <div id="status-message"></div>
 
     <!-- Індикатор версії -->
-    <div class="app-version">v1.5.05</div>
+    <div class="app-version">v1.5.06</div>
 </div>
 
 <!-- Підключення Firebase SDK через CDN -->
@@ -517,17 +517,15 @@
 
 async function pingMember(name) {
         try {
-            const response = await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`);
-            const result = await response.json();
+            // Використовуємо mode: 'no-cors', щоб браузер не блокував запит через політику CORS
+            await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`, {
+                method: 'GET',
+                mode: 'no-cors'
+            });
             
-            if (result.status === "success") {
-                alert(`Пуш-нагадування успішно надіслано для ${name}!`);
-            } else {
-                // Покажемо точну причину від сержанта/сервера
-                alert(`Помилка сервера: ${result.message || 'невідома помилка'}`);
-            }
+            alert(`Сигнал нагадування надіслано для ${name}! Перевірте пристрій.`);
         } catch (e) {
-            alert('Помилка мережі (CORS або URL не відповідає).');
+            alert('Помилка надсилання пінгу: ' + e.message);
         }
     }
 
