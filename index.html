@@ -356,7 +356,7 @@
     <div id="status-message"></div>
 
     <!-- Індикатор версії -->
-    <div class="app-version">v1.5.06</div>
+    <div class="app-version">v1.5.07</div>
 </div>
 
 <!-- Підключення Firebase SDK через CDN -->
@@ -368,12 +368,12 @@
 
     // Налаштування Firebase
     const firebaseConfig = {
-  apiKey: "AIzaSyBIh29HVxC4XozWLP7Hx9Yb7-NbnvzLzWM",
-  authDomain: "b4s-teleradio.firebaseapp.com",
-  projectId: "b4s-teleradio",
-  storageBucket: "b4s-teleradio.firebasestorage.app",
-  messagingSenderId: "586519224072",
-  appId: "1:586519224072:web:29630b02673cb5c50bd6bd"
+        apiKey: "AIzaSyBIh29HVxC4XozWLP7Hx9Yb7-NbnvzLzWM",
+        authDomain: "b4s-teleradio.firebaseapp.com",
+        projectId: "b4s-teleradio",
+        storageBucket: "b4s-teleradio.firebasestorage.app",
+        messagingSenderId: "586519224072",
+        appId: "1:586519224072:web:29630b02673cb5c50bd6bd"
     };
 
     const app = firebase.initializeApp(firebaseConfig);
@@ -390,7 +390,6 @@
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                // Явно реєструємо сервіс-воркер усередині нашої папки репозиторію
                 const swRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
 
                 const token = await messaging.getToken({
@@ -399,7 +398,6 @@
                 });
                 console.log('FCM Token пристрою:', token);
 
-                // Надсилаємо токен і прізвище на Google Apps Script для збереження
                 await fetch(WEB_APP_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -515,17 +513,18 @@
         }
     }
 
-async function pingMember(name) {
+    async function pingMember(name) {
         try {
-            // Використовуємо mode: 'no-cors', щоб браузер не блокував запит через політику CORS
-            await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`, {
-                method: 'GET',
-                mode: 'no-cors'
-            });
+            const response = await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`);
+            const result = await response.json();
             
-            alert(`Сигнал нагадування надіслано для ${name}! Перевірте пристрій.`);
+            if (result.status === "success") {
+                alert(`Пуш-нагадування успішно надіслано для ${name}!`);
+            } else {
+                alert(`Помилка від сервера: ${result.message || 'невідома помилка'}`);
+            }
         } catch (e) {
-            alert('Помилка надсилання пінгу: ' + e.message);
+            alert('Помилка мережі при пінзі: ' + e.message);
         }
     }
 
