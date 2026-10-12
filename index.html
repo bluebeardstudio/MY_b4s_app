@@ -308,6 +308,13 @@
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7JjemrNs8yvHuUGfUupBzXmY4kgfWeq3xjsKmTC64qg3CvJKBFemcpepy1yQcBZoAqg/exec";
 
+    if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker зареєстровано:', reg.scope))
+            .catch(err => console.log('Помилка Service Worker:', err));
+    });
+}
     let isAdmin = false;
     let currentTeamNames = [];
 
