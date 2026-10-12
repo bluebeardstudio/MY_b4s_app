@@ -353,26 +353,11 @@
     
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.10</div>
+    <div class="app-version">v1.5.11</div>
 </div>
-
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxxZ4DZpRRwHd1qM6b8CxdRQ0UdNCR6WY1Qkoje8npGVtN5KHG37G_kE0ks7yLXAleEQA/exec";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyBIh29HVxC4XozWLP7Hx9Yb7-NbnvzLzWM",
-        authDomain: "b4s-teleradio.firebaseapp.com",
-        projectId: "b4s-teleradio",
-        storageBucket: "b4s-teleradio.firebasestorage.app",
-        messagingSenderId: "586519224072",
-        appId: "1:586519224072:web:29630b02673cb5c50bd6bd"
-    };
-
-    const app = firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging(app);
 
     async function initPushNotifications() {
         const selectedName = document.getElementById('name').value;
@@ -381,21 +366,33 @@
             return;
         }
 
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            alert('Ваш браузер не підтримує веб-пуші.');
+            return;
+        }
+
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                const swRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-
-                const token = await messaging.getToken({
-                    vapidKey: "BBsMcXvFLlyj2kBm7rd3-dDw_JhURhVQfFNTqQwEKKNP9k7VohyWT053G6CGlB6NQZa_D6bjtojXs_rbSv_L39k",
-                    serviceWorkerRegistration: swRegistration
-                });
+                const swRegistration = await navigator.serviceWorker.ready;
+                
+                let subscription = await swRegistration.pushManager.getSubscription();
+                if (!subscription) {
+                    subscription = await swRegistration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array("BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Njh8Jg")
+                    });
+                }
 
                 await fetch(WEB_APP_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'saveToken', name: selectedName, token: token })
+                    body: JSON.stringify({ 
+                        action: 'saveToken', 
+                        name: selectedName, 
+                        token: JSON.stringify(subscription) 
+                    })
                 });
 
                 alert(`Пристрій успішно зареєстровано для ${selectedName}!`);
@@ -406,6 +403,17 @@
             console.error('Помилка реєстрації пристрою:', error);
             alert('Помилка: ' + error.message);
         }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
     }
 
     let isAdmin = false;
@@ -506,38 +514,15 @@
         }
     }
 
-async function pingMember(name) {
+    async function pingMember(name) {
         try {
-            // 1. Забираємо токен бійця з таблиці через наш Google Apps Script
             const response = await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`);
             const result = await response.json();
             
-            if (result.status === "success" && result.token) {
-                // 2. Відправляємо запит на пуш напряму з твого браузера на Firebase
-                const responseFCM = await fetch("https://fcm.googleapis.com/fcm/send", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "key=AIzaSyBIh29HVxC4XozWLP7Hx9Yb7-NbnvzLzWM"
-                    },
-                    body: JSON.stringify({
-                        to: result.token,
-                        notification: {
-                            title: "Нагадування БЧС 🔔",
-                            body: `${name}, терміново подайте план на завтра!`,
-                            icon: "https://cdn-icons-png.flaticon.com/512/3177/3177440.png"
-                        }
-                    })
-                });
-
-                if (responseFCM.ok) {
-                    alert(`Сигнал нагадування для ${name} успішно надіслано на пристрій!`);
-                } else {
-                    const errText = await responseFCM.text();
-                    alert(`Помилка відправки: ${errText}`);
-                }
+            if (result.status === "success") {
+                alert(`Сигнал нагадування для ${name} успішно відправлено на пристрій!`);
             } else {
-                alert(`Помилка: ${result.message || 'токен не знайдено в базі'}`);
+                alert(`Помилка пінгу: ${result.message || 'невідома помилка'}`);
             }
         } catch (e) {
             alert('Помилка мережі при пінзі: ' + e.message);
