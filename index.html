@@ -464,10 +464,10 @@
     }
 
     // Скачивание PDF-файла с принудительным правильным именем
-    async function submitBcsReport() {
+   async function submitBcsReport() {
         const statusMsg = document.getElementById('status-message');
         statusMsg.style.color = '#f59e0b';
-        statusMsg.textContent = '⏳ Генерація PDF-звіту БЧС...';
+        statusMsg.textContent = '⏳ Перевірка звітів особового складу...';
 
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getBcsReport`);
@@ -480,24 +480,11 @@
                 return;
             }
 
-            // Создаем виртуальную ссылку для скачивания файла с правильным именем
-            const byteCharacters = atob(result.base64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'application/pdf' });
-            
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = result.fileName; // Строго заданное имя файла!
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Открываем готовый PDF-отчет листа Final_B4S
+            window.open(result.reportUrl, '_blank');
 
             statusMsg.style.color = '#22c55e';
-            statusMsg.textContent = `✅ Файл "${result.fileName}" успішно завантажено!`;
+            statusMsg.textContent = '✅ Звіт БЧС успішно сформовано та відкрито!';
         } catch (e) {
             statusMsg.style.color = '#ef4444';
             statusMsg.textContent = '❌ Помилка формування звіту.';
