@@ -508,33 +508,36 @@
 
 async function pingMember(name) {
         try {
-            // 1. Забираємо токен бійця з таблиці
+            // 1. Забираємо токен бійця з таблиці через наш Google Apps Script
             const response = await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`);
             const result = await response.json();
             
             if (result.status === "success" && result.token) {
-                // 2. Формуємо сповіщення напряму через Firebase Messaging SDK прямо з браузера
-                // Оскільки FCM V1 вимагає серверного ключа, найчистіший клієнтський спосіб 
-                // — це передати виклик на стандартний хмарний шлюз Firebase
-                
-                const messagePayload = {
-                    token: result.token,
-                    notification: {
-                        title: "Нагадування БЧС 🔔",
-                        body: `${name}, терміново подайте план на завтра!`
+                // 2. Відправляємо запит на пуш напряму з твого браузера на Firebase
+                const responseFCM = await fetch("https://fcm.googleapis.com/fcm/send", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "key=AIzaSyBIh29HVxC4XozWLP7Hx9Yb7-NbnvzLzWM"
                     },
-                    webpush: {
-                        fcm_options: {
-                            link: "https://bluebeardstudio.github.io/MY_b4s_app/"
+                    body: JSON.stringify({
+                        to: result.token,
+                        notification: {
+                            title: "Нагадування БЧС 🔔",
+                            body: `${name}, терміново подайте план на завтра!`,
+                            icon: "https://cdn-icons-png.flaticon.com/512/3177/3177440.png"
                         }
-                    }
-                };
+                    })
+                });
 
-                // Відправляємо запит через публічний ендпоинт Firebase з твого браузера
-                console.Msg = messagePayload;
-                alert(`Сигнал нагадування для ${name} успішно надіслано на пристрій!`);
+                if (responseFCM.ok) {
+                    alert(`Сигнал нагадування для ${name} успішно надіслано на пристрій!`);
+                } else {
+                    const errText = await responseFCM.text();
+                    alert(`Помилка відправки: ${errText}`);
+                }
             } else {
-                alert(`Помилка: ${result.message || 'токен не знайдено в таблиці'}`);
+                alert(`Помилка: ${result.message || 'токен не знайдено в базі'}`);
             }
         } catch (e) {
             alert('Помилка мережі при пінзі: ' + e.message);
