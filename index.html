@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>План на завтра</title>
-    <!-- Подключаем шрифты и стили для красоты -->
     <style>
         :root {
             --bg-color: #0f172a;
@@ -24,6 +23,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            box-sizing: border-box;
         }
         .container {
             width: 100%;
@@ -110,14 +110,13 @@
         <!-- Выбор сотрудника -->
         <label for="name">Ваше прізвище / ім'я:</label>
         <select id="name" required>
-            <місце_для_списку_людей>
             <option value="" disabled selected>Оберіть зі списку...</option>
             <option value="Вова Власенко">Вова Власенко</option>
             <option value="Співробітник 2">Співробітник 2</option>
             <option value="Співробітник 3">Співробітник 3</option>
         </select>
 
-        <!-- Выбор локации / статуса (соответствует вашим колонкам в таблице) -->
+        <!-- Выбор локации / статуса -->
         <label>Статус / Локація:</label>
         <div class="status-grid">
             <div class="status-btn" data-value="Дистанційно">🏠 Дистанційно</div>
@@ -139,6 +138,28 @@
 </div>
 
 <script>
+    // 1. При загрузке страницы проверяем, сохраняли ли имя и статус ранее
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedName = localStorage.getItem('b4s_user_name');
+        const savedLocation = localStorage.getItem('b4s_user_location');
+
+        if (savedName) {
+            const nameSelect = document.getElementById('name');
+            nameSelect.value = savedName;
+        }
+
+        if (savedLocation) {
+            const locationInput = document.getElementById('location');
+            locationInput.value = savedLocation;
+            
+            document.querySelectorAll('.status-btn').forEach(btn => {
+                if (btn.getAttribute('data-value') === savedLocation) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+    });
+
     // Логика выбора кнопок статуса
     const statusBtns = document.querySelectorAll('.status-btn');
     const locationInput = document.getElementById('location');
@@ -156,20 +177,23 @@
     const submitBtn = document.getElementById('submitBtn');
     const statusMessage = document.getElementById('status-message');
 
-    // СЮДА ВСТАВЬТЕ ВАШУ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT (заканчивается на /exec)
+    // Ваша рабочая ссылка на Apps Script
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7JjemrNs8yvHuUGfUupBzXmY4kgfWeq3xjsKmTC64qg3CvJKBFemcpepy1yQcBZoAqg/exec";
 
     form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+        e.preventDefault(); 
         
         if (!locationInput.value) {
             alert('Будь ласка, оберіть статус!');
             return;
         }
 
+        const selectedName = document.getElementById('name').value;
+        const selectedLocation = locationInput.value;
+
         const formData = {
-            name: document.getElementById('name').value,
-            location: locationInput.value,
+            name: selectedName,
+            location: selectedLocation,
             task: document.getElementById('task').value
         };
 
@@ -180,18 +204,22 @@
         try {
             const response = await fetch(WEB_APP_URL, {
                 method: 'POST',
-                mode: 'no-cors', // Важно для Google Apps Script
+                mode: 'no-cors',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(formData)
             });
 
+            // 2. Сохраняем выбор в память телефона для будущих визитов
+            localStorage.setItem('b4s_user_name', selectedName);
+            localStorage.setItem('b4s_user_location', selectedLocation);
+
             statusMessage.style.color = '#22c55e';
             statusMessage.textContent = '✅ Звіт успішно надіслано! Дякуємо.';
-            form.reset();
-            statusBtns.forEach(b => b.classList.remove('active'));
-            locationInput.value = '';
+            
+            // Не сбрасываем форму полностью, чтобы имя и статус оставались запомненными
+            document.getElementById('task').value = '';
         } catch (error) {
             statusMessage.style.color = '#ef4444';
             statusMessage.textContent = '❌ Помилка надсилання. Спробуйте ще раз.';
