@@ -58,6 +58,7 @@
         .admin-toggle.active {
             border-color: var(--admin-color);
             color: var(--admin-color);
+            background: rgba(245, 158, 11, 0.1);
         }
         label {
             display: block;
@@ -119,11 +120,6 @@
         
         /* Секция админки */
         .admin-panel {
-            background: #0f172a;
-            border: 1px solid var(--admin-color);
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 20px;
             display: none;
         }
         .admin-panel.visible {
@@ -139,17 +135,17 @@
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
         }
         
         /* Статус-лист команды для админа */
         .admin-report-box {
-            background: #1e293b;
+            background: #0f172a;
             border: 1px solid #334155;
             border-radius: 8px;
             padding: 10px;
-            margin-bottom: 12px;
-            max-height: 180px;
+            margin-bottom: 14px;
+            max-height: 200px;
             overflow-y: auto;
         }
         .report-row {
@@ -183,7 +179,7 @@
 
         /* Выпадающие меню (аккордеон) */
         .accordion {
-            background: #1e293b;
+            background: #0f172a;
             border: 1px solid #334155;
             color: #f8fafc;
             padding: 10px 12px;
@@ -192,7 +188,7 @@
             border-radius: 6px;
             font-size: 13px;
             cursor: pointer;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -205,9 +201,9 @@
             padding-right: 2px;
         }
         .accordion-content.open {
-            max-height: 220px;
+            max-height: 250px;
             overflow-y: auto;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             padding-top: 4px;
         }
         .team-item {
@@ -216,7 +212,7 @@
             align-items: center;
             font-size: 12px;
             margin-bottom: 4px;
-            background: #1e293b;
+            background: #0f172a;
             padding: 6px 8px;
             border-radius: 6px;
             border: 1px solid #334155;
@@ -255,7 +251,7 @@
         <!-- Мониторинг: кто подал / кто забарился -->
         <label style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Статус звітів особового складу за сьогодні:</label>
         <div class="admin-report-box" id="adminReportList">
-            <div style="font-size: 12px; color: #94a3b8; text-align: center;">Завантаження статусу...</div>
+            <div style="font-size: 11px; color: #94a3b8; text-align: center;">Завантаження статусу...</div>
         </div>
 
         <!-- Меню 1: Список состава (скрыто в аккордеон) -->
@@ -328,16 +324,22 @@
         isAdmin = !isAdmin;
         const btn = document.getElementById('adminToggleBtn');
         const panel = document.getElementById('adminPanel');
+        const form = document.getElementById('planForm');
+        const formTitle = document.getElementById('form-title');
         
         if (isAdmin) {
             btn.classList.add('active');
             panel.classList.add('visible');
+            form.style.display = 'none'; // Прячем форму бойца
+            formTitle.textContent = '👑 Панель управління БЧС';
             loadAdminReportStatus();
             renderAdminTeamList();
             populateAdminSelects();
         } else {
             btn.classList.remove('active');
             panel.classList.remove('visible');
+            form.style.display = 'block'; // Возвращаем форму бойца
+            formTitle.textContent = 'План на завтра ⚡️';
         }
     }
 
@@ -403,7 +405,7 @@
     }
 
     function pingMember(name) {
-        alert(`🔔 Надіслано сигнал нагадування для: ${name} (можна продублювати в месенджер)`);
+        alert(`🔔 Надіслано сигнал нагадування для: ${name}`);
     }
 
     function renderAdminTeamList() {
@@ -598,9 +600,6 @@
 
             statusMessage.style.color = '#22c55e';
             statusMessage.textContent = '✅ Звіт успішно надіслано! Дякуємо.';
-            if (isAdmin) {
-                await loadAdminReportStatus();
-            }
         } catch (error) {
             statusMessage.style.color = '#ef4444';
             statusMessage.textContent = '❌ Помилка надсилання.';
