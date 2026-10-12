@@ -356,7 +356,7 @@
     <div id="status-message"></div>
 
     <!-- Індикатор версії -->
-    <div class="app-version">v1.5.03</div>
+    <div class="app-version">v1.5.04</div>
 </div>
 
 <!-- Підключення Firebase SDK через CDN -->
@@ -390,9 +390,12 @@
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                // ВикликаємоgetToken напряму без ручної реєстрації воркера — SDK зробить це автоматично з правильним ключом
+                // Явно реєструємо сервіс-воркер усередині нашої папки репозиторію
+                const swRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+
                 const token = await messaging.getToken({
-                    vapidKey: "BBsMcXvFLlyj2kBm7rd3-dDw_JhURhVQfFNTqQwEKKNP9k7VohyWT053G6CGlB6NQZa_D6bjtojXs_rbSv_L39k"
+                    vapidKey: "BBsMcXvFLlyj2kBm7rd3-dDw_JhURhVQfFNTqQwEKKNP9k7VohyWT053G6CGlB6NQZa_D6bjtojXs_rbSv_L39k",
+                    serviceWorkerRegistration: swRegistration
                 });
                 console.log('FCM Token пристрою:', token);
 
