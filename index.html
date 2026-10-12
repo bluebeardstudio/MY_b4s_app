@@ -353,7 +353,7 @@
     
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.08</div>
+    <div class="app-version">v1.5.09</div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -506,25 +506,22 @@
         }
     }
 
-async function pingMember(name) {
+    async function pingMember(name) {
         try {
-            // 1. Отримуємо токен пристрою бійця з таблиці через наш бекенд
             const response = await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`);
             const result = await response.json();
             
             if (result.status === "success" && result.token) {
-                // 2. Використовуємо отриманий токен для відправки нагадування через Firebase
-                // Оскільки ми маємо токен, записуємо подію в лог або відправляємо через клієнтський об'єкт
-                console.log(`Надсилаємо через Firebase на токен: ${result.token}`);
-                
-                alert(`Сигнал нагадування для ${name} успішно активовано через Firebase!`);
+                console.log(`Отримано токен для ${name}:`, result.token);
+                alert(`Токен для ${name} успішно отримано з таблиці!`);
             } else {
                 alert(`Помилка: ${result.message || 'токен не знайдено'}`);
             }
         } catch (e) {
-            alert('Помилка мережі при пінзі: ' + e.message);
+            alert('Помилка мережі: ' + e.message);
         }
     }
+
     function renderAdminTeamList() {
         const listContainer = document.getElementById('teamManageList');
         listContainer.innerHTML = '';
