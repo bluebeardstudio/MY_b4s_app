@@ -125,22 +125,6 @@
         button.submit-btn:active {
             opacity: 0.8;
         }
-        .push-enable-btn {
-            width: 100%;
-            padding: 10px;
-            background: #1e293b;
-            border: 1px dashed var(--accent);
-            color: var(--accent);
-            border-radius: 8px;
-            font-size: 13px;
-            cursor: pointer;
-            margin-bottom: 16px;
-            transition: background 0.2s;
-        }
-        .push-enable-btn:hover {
-            background: rgba(59, 130, 246, 0.1);
-        }
-        
         .admin-panel {
             display: none;
         }
@@ -169,12 +153,7 @@
             font-size: 13px;
             cursor: pointer;
             margin-bottom: 14px;
-            transition: background 0.2s;
         }
-        .refresh-btn:active {
-            background: #475569;
-        }
-        
         .admin-report-box {
             background: #0f172a;
             border: 1px solid #334155;
@@ -212,7 +191,6 @@
             font-size: 11px;
             margin-left: 4px;
         }
-
         .accordion {
             background: #0f172a;
             border: 1px solid #334155;
@@ -266,7 +244,6 @@
             margin-top: 15px;
             font-size: 14px;
         }
-        
         .app-version {
             text-align: center;
             margin-top: 20px;
@@ -347,86 +324,20 @@
         <textarea id="task" rows="3" placeholder="Що плануєте робити..." required></textarea>
 
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
-        
-        <button type="button" class="push-enable-btn" onclick="initPushNotifications()">🔔 Увімкнути нагадування на цьому пристрої</button>
     </form>
     
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.11</div>
+    <div class="app-version">v1.5.12</div>
 </div>
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxxZ4DZpRRwHd1qM6b8CxdRQ0UdNCR6WY1Qkoje8npGVtN5KHG37G_kE0ks7yLXAleEQA/exec";
 
-    async function initPushNotifications() {
-        const selectedName = document.getElementById('name').value;
-        if (!selectedName) {
-            alert('Спершу оберіть своє прізвище у формі вище, а потім увімкніть сповіщення!');
-            return;
-        }
-
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            alert('Ваш браузер не підтримує веб-пуші.');
-            return;
-        }
-
-        try {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                const swRegistration = await navigator.serviceWorker.ready;
-                
-                let subscription = await swRegistration.pushManager.getSubscription();
-                if (!subscription) {
-                    subscription = await swRegistration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: urlBase64ToUint8Array("BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Njh8Jg")
-                    });
-                }
-
-                await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'saveToken', 
-                        name: selectedName, 
-                        token: JSON.stringify(subscription) 
-                    })
-                });
-
-                alert(`Пристрій успішно зареєстровано для ${selectedName}!`);
-            } else {
-                alert('Дозвіл на сповіщення було відхилено в налаштуваннях браузера.');
-            }
-        } catch (error) {
-            console.error('Помилка реєстрації пристрою:', error);
-            alert('Помилка: ' + error.message);
-        }
-    }
-
-    function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    }
-
     let isAdmin = false;
     let currentTeamNames = [];
 
     function refreshAppData() {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-            });
-        }
         window.location.reload(true);
     }
 
@@ -514,18 +425,13 @@
         }
     }
 
-   function pingMember(name) {
-    const GAS_WEB_APP_URL = "ТУТ_ПОСИЛАННЯ_НА_ТВІЙ_GAS_WEB_APP";
+    function pingMember(name) {
+        const url = `${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`;
+        const img = new Image();
+        img.src = url;
+        alert(`Сигнал нагадування для ${name} надіслано в обробку!`);
+    }
 
-    // Використовуємо Image запит або sendBeacon, щоб браузер і CORS нічого не блокували
-    const url = `${GAS_WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`;
-    
-    // Створюємо невидиме зображення — браузер відправить GET-запит на сервер без будь-яких CORS-обмежень
-    const img = new Image();
-    img.src = url;
-    
-    alert(`Сигнал нагадування для ${name} надіслано в обробку!`);
-}
     function renderAdminTeamList() {
         const listContainer = document.getElementById('teamManageList');
         listContainer.innerHTML = '';
