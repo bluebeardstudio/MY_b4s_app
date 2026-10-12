@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>План на завтра / БЧС</title>
+    
+    <!-- Підключення PWA маніфесту та теги для iOS -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="БЧС">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3177/3177440.png">
+
     <style>
         :root {
             --bg-color: #0f172a;
@@ -335,7 +343,6 @@
     let isAdmin = false;
     let currentTeamNames = [];
 
-    // Принудительное обновление приложения и сброс кеша
     function refreshAppData() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
@@ -344,7 +351,6 @@
                 }
             });
         }
-        // Перезагрузка с полным обходом кеша браузера
         window.location.reload(true);
     }
 
