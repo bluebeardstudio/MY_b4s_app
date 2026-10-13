@@ -187,6 +187,7 @@
         }
         .badge.ok { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
         
+        /* Компактний червоний індикатор */
         .no-report-wrapper {
             display: flex;
             align-items: center;
@@ -213,6 +214,7 @@
             background: rgba(245, 158, 11, 0.1);
         }
         
+        /* Легкі акордеони */
         .accordion {
             background: #0f172a;
             border: 1px solid #334155;
@@ -298,6 +300,7 @@
             <div style="font-size: 11px; color: #94a3b8; text-align: center;">Завантаження статусу...</div>
         </div>
 
+        <!-- Полегшений акордеон: Список особового складу -->
         <button type="button" class="accordion" onclick="toggleAccordion('teamAccordion')">
             <span>👥 Список особового складу</span> <span>▼</span>
         </button>
@@ -309,6 +312,7 @@
             <div id="teamManageList"></div>
         </div>
 
+        <!-- Полегшений акордеон: Подати за іншого -->
         <button type="button" class="accordion" onclick="toggleAccordion('otherAccordion')">
             <span>📝 Подати за іншого бійця</span> <span>▼</span>
         </button>
@@ -358,11 +362,12 @@
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
     </form>
     
+    <!-- Кнопка оновлення винесена назовні для всіх -->
     <button type="button" class="refresh-btn" onclick="refreshAppData()">🔄 Оновити сторінку та дані</button>
 
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.26</div>
+    <div class="app-version">v1.5.24</div>
 </div>
 
 <script>
@@ -447,6 +452,7 @@
                 const row = document.createElement('div');
                 row.className = 'report-row';
                 
+                // Якщо це відпустка і є задача — виводимо її (напр. "Відпустка до 05.12.2026"), інакше звичайний статус
                 let displayStatus = (item.status === 'Відпустка' && item.task) ? item.task : item.status;
                 
                 let badgeHtml = item.submitted 
@@ -538,112 +544,26 @@
         }
     }
 
-    // ГЕНЕРАЦІЯ ЗВІТУ ПРЯМО НА ФРОНТЕНДІ (КЛІЄНТСЬКА ТАБЛИЦЯ)
     async function submitBcsReport() {
         const statusMsg = document.getElementById('status-message');
         statusMsg.style.color = '#f59e0b';
         statusMsg.textContent = 'Перевірка звітів особового складу...';
 
         try {
-            const response = await fetch(`${WEB_APP_URL}?action=getAdminReportStatus`);
-            const reportData = await response.json();
+            const response = await fetch(`${WEB_APP_URL}?action=getBcsReport`);
+            const result = await response.json();
 
-            const missing = reportData.filter(item => !item.submitted).map(item => item.name);
-
-            if (missing.length > 0) {
-                alert(`Увага! Не всі подали звіти.\n\nЩе не здали: ${missing.join(', ')}`);
+            if (!result.ready) {
+                alert(`Увага! Не всі подали звіти ЗА СЬОГОДНІ.\n\nЩе не здали: ${result.missing.join(', ')}`);
                 statusMsg.textContent = 'Подача відкладена: є заборгованість по звітах.';
                 loadAdminReportStatus();
                 return;
             }
 
-            const totalStaff = reportData.length;
-            let counts = { "Відрядження": 0, "Відпустка": 0, "Лікування": 0, "ППД": 0, "Дистанційно": 0 };
-            let lists = { "Відрядження": [], "Відпустка": [], "Лікування": [], "ППД": [], "Дистанційно": [] };
-
-            reportData.forEach(item => {
-                let status = item.status;
-                if (counts[status] !== undefined) {
-                    counts[status]++;
-                    lists[status].push(item.name);
-                }
-            });
-
-            // "В строю" = ППД + Дистанційно
-            let inService = (counts["ППД"] || 0) + (counts["Дистанційно"] || 0);
-
-            const now = new Date();
-            const dayStr = String(now.getDate()).padStart(2, '0') + '.' + String(now.getMonth() + 1).padStart(2, '0');
-            const timeOfDay = now.getHours() < 12 ? 'ранок' : 'вечір';
-
-            const printWin = window.open('', '_blank');
-            printWin.document.write(`
-                <html>
-                <head>
-                    <title>Звіт БЧС - ${dayStr} ${timeOfDay}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
-                        .header-right { text-align: right; font-weight: bold; font-size: 16px; margin-bottom: 10px; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; text-align: center; }
-                        th, td { border: 1px solid #000; padding: 8px 4px; font-size: 13px; }
-                        th { background-color: #d1fae5; }
-                        .unit-name { background-color: #d1fae5; font-weight: bold; text-align: left; padding-left: 8px; }
-                        .names-table td { border: none; text-align: left; vertical-align: top; font-size: 12px; padding: 4px; }
-                    </style>
-                </head>
-                <body>
-                    <div class="header-right">${dayStr} &nbsp; ${timeOfDay}</div>
-                    <table>
-                        <tr>
-                            <th>Назва підрозділу</th>
-                            <th>Штат</th>
-                            <th>Список</th>
-                            <th>Прикомандировані</th>
-                            <th>Відрядження</th>
-                            <th>Відпустка</th>
-                            <th>Лікування</th>
-                            <th>ППД</th>
-                            <th>Дистанційно</th>
-                            <th>В строю</th>
-                        </tr>
-                        <tr>
-                            <td class="unit-name">Телерадіовідділ</td>
-                            <td>${totalStaff}</td>
-                            <td>${totalStaff}</td>
-                            <td></td>
-                            <td>${counts["Відрядження"] || ''}</td>
-                            <td>${counts["Відпустка"] || ''}</td>
-                            <td>${counts["Лікування"] || ''}</td>
-                            <td>${counts["ППД"] || ''}</td>
-                            <td>${counts["Дистанційно"] || ''}</td>
-                            <td><b>${inService}</b></td>
-                        </tr>
-                    </table>
-
-                    <table class="names-table">
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td>${lists["Відрядження"].join('<br>')}</td>
-                            <td>${lists["Відпустка"].join('<br>')}</td>
-                            <td>${lists["Лікування"].join('<br>')}</td>
-                            <td>${lists["ППД"].join('<br>')}</td>
-                            <td>${lists["Дистанційно"].join('<br>')}</td>
-                            <td></td>
-                        </tr>
-                    </table>
-
-                    <script>
-                        window.onload = function() { window.print(); }
-                    </script>
-                </body>
-                </html>
-            `);
-            printWin.document.close();
+            window.open(result.reportUrl, '_blank');
 
             statusMsg.style.color = '#22c55e';
-            statusMsg.textContent = 'Звіт успішно сформовано!';
+            statusMsg.textContent = 'Звіт БЧС успішно сформовано та відкрито!';
         } catch (e) {
             statusMsg.style.color = '#ef4444';
             statusMsg.textContent = 'Помилка формування звіту.';
