@@ -6,23 +6,11 @@
     <title>План на завтра / БЧС</title>
     
     <link rel="manifest" href="./manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="БЧС">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3177/3177440.png">
-
-    <!-- OneSignal SDK -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      window.OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "5657541d-7ba8-4b3f-b7c6-502a27e30e51",
-          serviceWorkerPath: "MY_b4s_app/OneSignalSDKWorker.js",
-          serviceWorkerUpdaterPath: "MY_b4s_app/OneSignalSDKUpdaterWorker.js"
-        });
-      });
-    </script>
 
     <style>
         :root {
@@ -154,18 +142,23 @@
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
-            margin-bottom: 10px;
+            margin-bottom: 14px;
         }
         .refresh-btn {
             width: 100%;
             padding: 10px;
-            background: #334155;
-            color: #fff;
-            border: none;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
             border-radius: 8px;
             font-size: 13px;
             cursor: pointer;
-            margin-bottom: 14px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        .refresh-btn:hover {
+            color: #fff;
+            border-color: #64748b;
         }
         .admin-report-box {
             background: #0f172a;
@@ -193,7 +186,21 @@
             font-weight: bold;
         }
         .badge.ok { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
-        .badge.no { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        
+        /* Компактний червоний індикатор */
+        .no-report-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .danger-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: var(--danger);
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+        }
         .ping-btn {
             background: none;
             border: 1px solid #334155;
@@ -202,22 +209,31 @@
             padding: 2px 6px;
             cursor: pointer;
             font-size: 11px;
-            margin-left: 4px;
         }
+        .ping-btn:hover {
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        /* Легкі акордеони */
         .accordion {
             background: #0f172a;
             border: 1px solid #334155;
-            color: #f8fafc;
+            color: #94a3b8;
             padding: 10px 12px;
             width: 100%;
             text-align: left;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 13px;
             cursor: pointer;
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all 0.2s;
+        }
+        .accordion:hover {
+            color: #f8fafc;
+            border-color: #64748b;
         }
         .accordion-content {
             max-height: 0;
@@ -227,9 +243,9 @@
             padding-right: 2px;
         }
         .accordion-content.open {
-            max-height: 250px;
+            max-height: 220px;
             overflow-y: auto;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             padding-top: 4px;
         }
         .team-item {
@@ -278,15 +294,15 @@
         <label style="color: var(--admin-color); margin-bottom: 6px; font-weight: bold;">Керування звітом БЧС:</label>
         
         <button type="button" class="bcs-btn" onclick="submitBcsReport()">Подати БЧС черговому</button>
-        <button type="button" class="refresh-btn" onclick="refreshAppData()">🔄 Оновити сторінку та дані</button>
 
         <label style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Статус звітів особового складу за сьогодні:</label>
         <div class="admin-report-box" id="adminReportList">
             <div style="font-size: 11px; color: #94a3b8; text-align: center;">Завантаження статусу...</div>
         </div>
 
+        <!-- Полегшений акордеон: Список особового складу -->
         <button type="button" class="accordion" onclick="toggleAccordion('teamAccordion')">
-            <span>Список особового складу</span> <span>▼</span>
+            <span>👥 Список особового складу</span> <span>▼</span>
         </button>
         <div class="accordion-content" id="teamAccordion">
             <div style="display: flex; gap: 6px; margin-bottom: 6px;">
@@ -296,8 +312,9 @@
             <div id="teamManageList"></div>
         </div>
 
+        <!-- Полегшений акордеон: Подати за іншого -->
         <button type="button" class="accordion" onclick="toggleAccordion('otherAccordion')">
-            <span>Подати за іншого військовослужбовця</span> <span>▼</span>
+            <span>📝 Подати за іншого бійця</span> <span>▼</span>
         </button>
         <div class="accordion-content" id="otherAccordion">
             <label style="font-size: 11px; margin-bottom: 2px;">Оберіть бійця:</label>
@@ -305,14 +322,18 @@
                 <option value="" disabled selected>Оберіть...</option>
             </select>
             <label style="font-size: 11px; margin-bottom: 2px;">Статус:</label>
-            <select id="adminTargetStatus" style="padding: 6px; font-size: 13px; margin-bottom: 6px;">
+            <select id="adminTargetStatus" style="padding: 6px; font-size: 13px; margin-bottom: 6px;" onchange="handleAdminStatusChange(this.value)">
                 <option value="Дистанційно">Дистанційно</option>
                 <option value="ППД" selected>ППД</option>
                 <option value="Лікування">Лікування</option>
                 <option value="Відрядження">Відрядження</option>
                 <option value="Відпустка">Відпустка</option>
             </select>
-            <input type="text" id="adminTargetTask" placeholder="Задача..." style="padding: 6px; font-size: 13px; margin-bottom: 6px;">
+            
+            <div id="adminTaskContainer">
+                <input type="text" id="adminTargetTask" placeholder="Задача..." style="padding: 6px; font-size: 13px; margin-bottom: 6px;">
+            </div>
+
             <button type="button" onclick="submitForOther()" style="width:100%; padding: 8px; background: #334155; color: #fff; border:none; border-radius:6px; cursor:pointer; font-size:12px;">Зберегти звіт за нього</button>
         </div>
     </div>
@@ -333,19 +354,24 @@
         </div>
         <input type="hidden" id="location" required>
 
-        <label for="task">Коротко задачу на завтра:</label>
-        <textarea id="task" rows="3" placeholder="Що плануєте робити..." required></textarea>
+        <div id="dynamicTaskContainer">
+            <label for="task" id="taskLabel">Коротко задачу на завтра:</label>
+            <textarea id="task" rows="3" placeholder="Що плануєте робити..." required></textarea>
+        </div>
 
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
     </form>
     
+    <!-- Кнопка оновлення винесена назовні для всіх -->
+    <button type="button" class="refresh-btn" onclick="refreshAppData()">🔄 Оновити сторінку та дані</button>
+
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.14</div>
+    <div class="app-version">v1.5.24</div>
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxxZ4DZpRRwHd1qM6b8CxdRQ0UdNCR6WY1Qkoje8npGVtN5KHG37G_kE0ks7yLXAleEQA/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx3P8TTFG_nZXGwe_izW3EeMoFc_8CFPpbRlDgBkHs2Mib5J0rvwHDMAD3KC0UN0ROM/exec";
 
     let isAdmin = false;
     let currentTeamNames = [];
@@ -398,11 +424,6 @@
 
             if (preselectName) {
                 nameSelect.value = preselectName;
-                // Автоматично прив'язуємо в OneSignal при завантаженні, якщо ім'я збережене
-                window.OneSignalDeferred = window.OneSignalDeferred || [];
-                window.OneSignalDeferred.push(async function(OneSignal) {
-                    await OneSignal.login(preselectName);
-                });
             }
             if (isAdmin) {
                 renderAdminTeamList();
@@ -412,17 +433,6 @@
             nameSelect.innerHTML = '<option value="" disabled selected>Помилка завантаження</option>';
         }
     }
-
-    // Слухач зміни імені для реєстрації пристрою в OneSignal
-    document.getElementById('name').addEventListener('change', (e) => {
-        const selectedName = e.target.value;
-        if (selectedName) {
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            window.OneSignalDeferred.push(async function(OneSignal) {
-                await OneSignal.login(selectedName);
-            });
-        }
-    });
 
     async function loadAdminReportStatus() {
         const reportBox = document.getElementById('adminReportList');
@@ -442,9 +452,12 @@
                 const row = document.createElement('div');
                 row.className = 'report-row';
                 
+                // Якщо це відпустка і є задача — виводимо її (напр. "Відпустка до 05.12.2026"), інакше звичайний статус
+                let displayStatus = (item.status === 'Відпустка' && item.task) ? item.task : item.status;
+                
                 let badgeHtml = item.submitted 
-                    ? `<span class="badge ok" title="${item.task}">${item.status}</span>` 
-                    : `<span class="badge no">Не здано</span> <button type="button" class="ping-btn" onclick="pingMember('${item.name}')">Пінганути</button>`;
+                    ? `<span class="badge ok" title="${item.task}">${displayStatus}</span>` 
+                    : `<div class="no-report-wrapper"><span class="danger-dot" title="Не здано"></span> <button type="button" class="ping-btn" onclick="pingMember('${item.name}')">Нагадати</button></div>`;
                 
                 row.innerHTML = `<span>${item.name}</span> <div>${badgeHtml}</div>`;
                 reportBox.appendChild(row);
@@ -454,11 +467,17 @@
         }
     }
 
-    function pingMember(name) {
-        const url = `${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`;
-        const img = new Image();
-        img.src = url;
-        alert(`Сигнал нагадування для ${name} надіслано в обробку!`);
+    async function pingMember(name) {
+      try {
+        await fetch(`${WEB_APP_URL}?action=pingMember&name=${encodeURIComponent(name)}`, {
+          method: 'GET',
+          mode: 'no-cors'
+        });
+        alert(`Лист-нагадування надіслано для: ${name}`);
+      } catch (error) {
+        console.error('Помилка нагадування:', error);
+        alert('Помилка надсилання листа');
+      }
     }
 
     function renderAdminTeamList() {
@@ -551,18 +570,51 @@
         }
     }
 
+    function handleAdminStatusChange(status) {
+        const container = document.getElementById('adminTaskContainer');
+        if (status === 'Відпустка') {
+            container.innerHTML = `
+                <label style="font-size: 11px; margin-bottom: 2px;">Дата закінчення відпустки:</label>
+                <input type="date" id="adminVacationEndDate" style="padding: 6px; font-size: 13px; margin-bottom: 6px;" required>
+            `;
+        } else {
+            container.innerHTML = `
+                <input type="text" id="adminTargetTask" placeholder="Задача..." style="padding: 6px; font-size: 13px; margin-bottom: 6px;">
+            `;
+        }
+    }
+
     async function submitForOther() {
         const targetName = document.getElementById('adminTargetName').value;
         const targetStatus = document.getElementById('adminTargetStatus').value;
-        const targetTask = document.getElementById('adminTargetTask').value.trim();
+        
+        let targetTask = "";
+        let customDate = "";
 
         if (!targetName) {
             alert('Оберіть військовослужбовця!');
             return;
         }
-        if (!targetTask) {
-            alert('Введіть задачу!');
-            return;
+
+        if (targetStatus === 'Відпустка') {
+            const dateInputVal = document.getElementById('adminVacationEndDate').value;
+            if (!dateInputVal) {
+                alert('Введіть дату закінчення відпустки!');
+                return;
+            }
+            const parts = dateInputVal.split('-');
+            if (parts.length === 3) {
+                customDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
+            } else {
+                customDate = dateInputVal;
+            }
+            targetTask = `Відпустка до ${customDate}`;
+        } else {
+            targetTask = document.getElementById('adminTargetTask').value.trim();
+            if (!targetTask) {
+                alert('Введіть задачу!');
+                return;
+            }
         }
 
         try {
@@ -570,10 +622,14 @@
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: targetName, location: targetStatus, task: targetTask })
+                body: JSON.stringify({ name: targetName, location: targetStatus, task: targetTask, customDate: customDate })
             });
-            document.getElementById('adminTargetTask').value = '';
-            alert(`Звіт за ${targetName} успішно записано на сьогодні!`);
+            if (targetStatus === 'Відпустка') {
+                document.getElementById('adminVacationEndDate').value = '';
+            } else {
+                document.getElementById('adminTargetTask').value = '';
+            }
+            alert(`Звіт за ${targetName} успішно записано!`);
             await loadAdminReportStatus();
         } catch (e) {
             alert('Помилка надсилання');
@@ -594,21 +650,47 @@
                     btn.classList.add('active');
                 }
             });
+            if (savedLocation === 'Відпустка') {
+                updateTaskFieldForVacation(true);
+            }
         }
 
         if (savedTask) {
-            document.getElementById('task').value = savedTask;
+            const taskInput = document.getElementById('task') || document.getElementById('vacationEndDate');
+            if (taskInput) taskInput.value = savedTask;
         }
     });
 
     const statusBtns = document.querySelectorAll('.status-btn');
     const locationInput = document.getElementById('location');
 
+    function updateTaskFieldForVacation(isVacation) {
+        const container = document.getElementById('dynamicTaskContainer');
+        if (isVacation) {
+            container.innerHTML = `
+                <label for="vacationEndDate">Дата закінчення відпустки:</label>
+                <input type="date" id="vacationEndDate" required>
+            `;
+        } else {
+            container.innerHTML = `
+                <label for="task">Коротко задачу на завтра:</label>
+                <textarea id="task" rows="3" placeholder="Що плануєте робити..." required></textarea>
+            `;
+        }
+    }
+
     statusBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             statusBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            locationInput.value = btn.getAttribute('data-value');
+            const val = btn.getAttribute('data-value');
+            locationInput.value = val;
+
+            if (val === 'Відпустка') {
+                updateTaskFieldForVacation(true);
+            } else {
+                updateTaskFieldForVacation(false);
+            }
         });
     });
 
@@ -626,12 +708,32 @@
 
         const selectedName = document.getElementById('name').value;
         const selectedLocation = locationInput.value;
-        const selectedTask = document.getElementById('task').value;
+        
+        let selectedTask = "";
+        let customDate = "";
+
+        if (selectedLocation === 'Відпустка') {
+            const dateInputVal = document.getElementById('vacationEndDate').value;
+            if (!dateInputVal) {
+                alert('Будь ласка, вкажіть дату закінчення відпустки!');
+                return;
+            }
+            const parts = dateInputVal.split('-');
+            if (parts.length === 3) {
+                customDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
+            } else {
+                customDate = dateInputVal;
+            }
+            selectedTask = `Відпустка до ${customDate}`;
+        } else {
+            selectedTask = document.getElementById('task').value;
+        }
 
         const formData = {
             name: selectedName,
             location: selectedLocation,
-            task: selectedTask
+            task: selectedTask,
+            customDate: customDate
         };
 
         submitBtn.disabled = true;
