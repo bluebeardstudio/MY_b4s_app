@@ -84,7 +84,7 @@
             box-sizing: border-box;
         }
         
-        /* Стилі для останнього звіту (звичайний / попереджувальний червонуватий) */
+        /* Інформація про останній звіт / попередження */
         .last-submit-info {
             font-size: 12px;
             color: var(--accent);
@@ -171,7 +171,21 @@
             margin-bottom: 14px;
             max-height: 200px;
             overflow-y: auto;
+            transition: all 0.3s ease;
         }
+        
+        /* Анімація переливчастого градієнта для завантаження в адмінці */
+        @keyframes loadingShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .admin-report-box.loading {
+            background: linear-gradient(90deg, var(--input-bg) 25%, rgba(59, 130, 246, 0.25) 50%, var(--input-bg) 75%);
+            background-size: 200% 100%;
+            animation: loadingShimmer 1.4s infinite linear;
+            border-color: var(--accent);
+        }
+
         .report-row {
             display: flex;
             justify-content: space-between;
@@ -296,21 +310,6 @@
             border-color: var(--accent);
         }
 
-        /* Анімація переливчастого градієнта для активної кнопки оновлення */
-        @keyframes gradientPulse {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .refresh-btn-half.loading {
-            background: linear-gradient(270deg, var(--accent), var(--admin-color), var(--success));
-            background-size: 200% 200%;
-            animation: gradientPulse 1.5s ease infinite;
-            color: #fff !important;
-            font-weight: bold;
-            border-color: transparent;
-        }
-
         #status-message {
             text-align: center;
             margin-top: 15px;
@@ -405,7 +404,7 @@
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
     </form>
     
-    <!-- Нижня панель: вибір теми та анімована кнопка оновлення -->
+    <!-- Нижня панель: вибір теми та оновлення -->
     <div class="bottom-action-bar">
         <select id="themeSelector" class="theme-select" onchange="changeTheme(this.value)">
             <option value="theme-dark">🌑 Темна</option>
@@ -413,7 +412,7 @@
             <option value="theme-light">☀️ Світла</option>
             <option value="theme-cyberpunk">⚡ Кіберпанк</option>
         </select>
-        <button type="button" id="refreshBtn" class="refresh-btn-half" onclick="refreshAppData()">🔄 Оновити</button>
+        <button type="button" class="refresh-btn-half" onclick="refreshAppData()">🔄 Оновити</button>
     </div>
 
     <div id="status-message"></div>
@@ -429,12 +428,7 @@
     let reportsCache = {};
 
     function refreshAppData() {
-        const btn = document.getElementById('refreshBtn');
-        btn.classList.add('loading');
-        btn.textContent = '⏳ Оновлення...';
-        setTimeout(() => {
-            window.location.reload(true);
-        }, 600);
+        window.location.reload(true);
     }
 
     function changeTheme(themeName) {
@@ -528,7 +522,6 @@
         const entry = reportsCache[selectedName];
 
         if (entry && entry.submitted && entry.date) {
-            // Звіт здано
             infoBox.classList.remove('warning');
             
             let dateStr = entry.date;
@@ -564,21 +557,23 @@
             const timeText = timeOnly ? ` о ${timeOnly}` : '';
             infoBox.textContent = `📌 Останній звіт подано: ${readableWhen}${timeText}`;
         } else {
-            // Звіт ще НЕ здано — червонуватий попереджувальний фон
             infoBox.classList.add('warning');
-            infoBox.textContent = `⚠️ Ви ще не подали звіт за поточний період. Будь ласка, заповніть форму!`;
+            infoBox.textContent = `⚠️ Ви ще не подали звіт за поточний період.`;
         }
     }
 
     async function loadAdminReportStatus() {
         const reportBox = document.getElementById('adminReportList');
-        reportBox.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center;">Оновлення статусу...</div>';
+        reportBox.classList.add('loading');
+        reportBox.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 10px;">Оновлення статусу...</div>';
         
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getAdminReportStatus`);
             const reportData = await response.json();
             
+            reportBox.classList.remove('loading');
             reportBox.innerHTML = '';
+            
             if (reportData.length === 0) {
                 reportBox.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center;">Склад порожній</div>';
                 return;
@@ -599,6 +594,7 @@
                 reportBox.appendChild(row);
             });
         } catch (e) {
+            reportBox.classList.remove('loading');
             reportBox.innerHTML = '<div style="font-size: 11px; color: var(--danger); text-align: center;">Помилка завантаження</div>';
         }
     }
