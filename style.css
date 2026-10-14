@@ -1,0 +1,80 @@
+/* 4 кольорові схеми для додатка БЧС */
+
+:root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-color: #f8fafc;
+    --accent: #3b82f6;
+    --success: #22c55e;
+    --admin-color: #f59e0b;
+    --danger: #ef4444;
+    --input-bg: #0f172a;
+    --border-color: #334155;
+    --text-muted: #94a3b8;
+}
+
+/* 1. Темна (за замовчуванням) */
+body.theme-dark {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-color: #f8fafc;
+    --accent: #3b82f6;
+    --success: #22c55e;
+    --admin-color: #f59e0b;
+    --danger: #ef4444;
+    --input-bg: #0f172a;
+    --border-color: #334155;
+    --text-muted: #94a3b8;
+}
+
+/* 2. Світла мілітарі */
+body.theme-military {
+    --bg-color: #333d29;
+    --card-bg: #4f5d40;
+    --text-color: #fefae0;
+    --accent: #606c38;
+    --success: #283618;
+    --admin-color: #dda15e;
+    --danger: #bc6c25;
+    --input-bg: #38422d;
+    --border-color: #606c38;
+    --text-muted: #dda15e;
+}
+
+/* 3. Світла звичайна */
+body.theme-light {
+    --bg-color: #f1f5f9;
+    --card-bg: #ffffff;
+    --text-color: #0f172a;
+    --accent: #2563eb;
+    --success: #16a34a;
+    --admin-color: #d97706;
+    --danger: #dc2626;
+    --input-bg: #f8fafc;
+    --border-color: #cbd5e1;
+    --text-muted: #64748b;
+}
+
+/* 4. Кіберпанк з глоу */
+body.theme-cyberpunk {
+    --bg-color: #05050a;
+    --card-bg: #121223;
+    --text-color: #00ffcc;
+    --accent: #ff007f;
+    --success: #00ff66;
+    --admin-color: #ffcc00;
+    --danger: #ff0033;
+    --input-bg: #090916;
+    --border-color: #ff007f;
+    --text-muted: #00bfff;
+}
+body.theme-cyberpunk .container {
+    box-shadow: 0 0 20px rgba(255, 0, 127, 0.4), inset 0 0 10px rgba(0, 255, 204, 0.2);
+    border: 1px solid var(--accent);
+}
+body.theme-cyberpunk button.submit-btn {
+    box-shadow: 0 0 10px var(--success);
+}
+body.theme-cyberpunk .bcs-btn {
+    box-shadow: 0 0 10px var(--admin-color);
+}

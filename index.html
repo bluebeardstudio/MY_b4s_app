@@ -7,23 +7,16 @@
     
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/png" href="./icon.png">
+    <link rel="apple-touch-icon" href="./icon.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="БЧС">
-    <link rel="icon" type="image/png" href="./icon.png">
-    <link rel="apple-touch-icon" href="./icon.png">
+
+    <!-- Підключення зовнішнього файлу стилів -->
+    <link rel="stylesheet" href="./style.css">
 
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --accent: #3b82f6;
-            --success: #22c55e;
-            --admin-color: #f59e0b;
-            --danger: #ef4444;
-        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
@@ -35,6 +28,7 @@
             align-items: center;
             min-height: 100vh;
             box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .container {
             width: 100%;
@@ -45,6 +39,7 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             box-sizing: border-box;
             position: relative;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
         .header-flex {
             display: flex;
@@ -55,11 +50,12 @@
         h2 {
             margin: 0;
             font-size: 20px;
+            color: var(--text-color);
         }
         .admin-toggle {
             background: none;
-            border: 1px solid #334155;
-            color: #94a3b8;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
             padding: 6px 10px;
             border-radius: 6px;
             font-size: 12px;
@@ -74,28 +70,28 @@
             display: block;
             margin-bottom: 8px;
             font-size: 14px;
-            color: #94a3b8;
+            color: var(--text-muted);
         }
         select, input, textarea {
             width: 100%;
             padding: 12px;
             margin-bottom: 16px;
             border-radius: 8px;
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: #fff;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-color);
             font-size: 16px;
             box-sizing: border-box;
         }
         .last-submit-info {
             font-size: 12px;
-            color: #38bdf8;
+            color: var(--accent);
             margin-top: -10px;
             margin-bottom: 16px;
-            background: rgba(56, 189, 248, 0.1);
+            background: rgba(59, 130, 246, 0.1);
             padding: 6px 10px;
             border-radius: 6px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.2);
             display: none;
         }
         .status-grid {
@@ -106,9 +102,9 @@
         }
         .status-btn {
             padding: 12px;
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: #fff;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-color);
             border-radius: 8px;
             font-size: 14px;
             cursor: pointer;
@@ -121,6 +117,7 @@
         .status-btn.active {
             background: var(--accent);
             border-color: var(--accent);
+            color: #fff;
             font-weight: bold;
         }
         button.submit-btn {
@@ -157,25 +154,9 @@
             cursor: pointer;
             margin-bottom: 14px;
         }
-        .refresh-btn {
-            width: 100%;
-            padding: 10px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #94a3b8;
-            border-radius: 8px;
-            font-size: 13px;
-            cursor: pointer;
-            margin-top: 15px;
-            margin-bottom: 10px;
-        }
-        .refresh-btn:hover {
-            color: #fff;
-            border-color: #64748b;
-        }
         .admin-report-box {
-            background: #0f172a;
-            border: 1px solid #334155;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 10px;
             margin-bottom: 14px;
@@ -188,7 +169,7 @@
             align-items: center;
             font-size: 12px;
             padding: 6px 0;
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid var(--border-color);
         }
         .report-row:last-child {
             border-bottom: none;
@@ -198,9 +179,8 @@
             border-radius: 4px;
             font-weight: bold;
         }
-        .badge.ok { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .badge.ok { background: rgba(34, 197, 94, 0.2); color: var(--success); }
         
-        /* Компактний червоний індикатор */
         .no-report-wrapper {
             display: flex;
             align-items: center;
@@ -216,8 +196,8 @@
         }
         .ping-btn {
             background: none;
-            border: 1px solid #334155;
-            color: #f59e0b;
+            border: 1px solid var(--border-color);
+            color: var(--admin-color);
             border-radius: 4px;
             padding: 2px 6px;
             cursor: pointer;
@@ -227,11 +207,10 @@
             background: rgba(245, 158, 11, 0.1);
         }
         
-        /* Легкі акордеони */
         .accordion {
-            background: #0f172a;
-            border: 1px solid #334155;
-            color: #94a3b8;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
             padding: 10px 12px;
             width: 100%;
             text-align: left;
@@ -245,8 +224,8 @@
             transition: all 0.2s;
         }
         .accordion:hover {
-            color: #f8fafc;
-            border-color: #64748b;
+            color: var(--text-color);
+            border-color: var(--accent);
         }
         .accordion-content {
             max-height: 0;
@@ -267,10 +246,10 @@
             align-items: center;
             font-size: 12px;
             margin-bottom: 4px;
-            background: #0f172a;
+            background: var(--input-bg);
             padding: 6px 8px;
             border-radius: 6px;
-            border: 1px solid #334155;
+            border: 1px solid var(--border-color);
         }
         .x-btn {
             background: none;
@@ -281,6 +260,32 @@
             font-weight: bold;
             padding: 0 4px;
         }
+        
+        /* Нижня панель: вибір теми та оновлення розділені навпіл */
+        .bottom-action-bar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        .theme-select, .refresh-btn-half {
+            padding: 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+            box-sizing: border-box;
+            margin-bottom: 0;
+        }
+        .theme-select:hover, .refresh-btn-half:hover {
+            color: var(--text-color);
+            border-color: var(--accent);
+        }
+
         #status-message {
             text-align: center;
             margin-top: 15px;
@@ -290,12 +295,12 @@
             text-align: center;
             margin-top: 20px;
             font-size: 11px;
-            color: #64748b;
+            color: var(--text-muted);
             letter-spacing: 0.5px;
         }
     </style>
 </head>
-<body>
+<body class="theme-dark">
 
 <div class="container">
     <div class="header-flex">
@@ -308,12 +313,11 @@
         
         <button type="button" class="bcs-btn" onclick="submitBcsReport()">Подати БЧС черговому</button>
 
-        <label style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Статус звітів особового складу за сьогодні:</label>
+        <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Статус звітів особового складу за сьогодні:</label>
         <div class="admin-report-box" id="adminReportList">
-            <div style="font-size: 11px; color: #94a3b8; text-align: center;">Завантаження статусу...</div>
+            <div style="font-size: 11px; color: var(--text-muted); text-align: center;">Завантаження статусу...</div>
         </div>
 
-        <!-- Полегшений акордеон: Список особового складу -->
         <button type="button" class="accordion" onclick="toggleAccordion('teamAccordion')">
             <span>👥 Список особового складу</span> <span>▼</span>
         </button>
@@ -325,7 +329,6 @@
             <div id="teamManageList"></div>
         </div>
 
-        <!-- Полегшений акордеон: Подати за іншого -->
         <button type="button" class="accordion" onclick="toggleAccordion('otherAccordion')">
             <span>📝 Подати за іншого бійця</span> <span>▼</span>
         </button>
@@ -347,7 +350,7 @@
                 <input type="text" id="adminTargetTask" placeholder="Задача..." style="padding: 6px; font-size: 13px; margin-bottom: 6px;">
             </div>
 
-            <button type="button" onclick="submitForOther()" style="width:100%; padding: 8px; background: #334155; color: #fff; border:none; border-radius:6px; cursor:pointer; font-size:12px;">Зберегти звіт за нього</button>
+            <button type="button" onclick="submitForOther()" style="width:100%; padding: 8px; background: var(--border-color); color: #fff; border:none; border-radius:6px; cursor:pointer; font-size:12px;">Зберегти звіт за нього</button>
         </div>
     </div>
 
@@ -377,12 +380,20 @@
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
     </form>
     
-    <!-- Кнопка оновлення винесена назовні для всіх -->
-    <button type="button" class="refresh-btn" onclick="refreshAppData()">🔄 Оновити сторінку та дані</button>
+    <!-- Нижня панель: зліва вибір теми, справа оновлення -->
+    <div class="bottom-action-bar">
+        <select id="themeSelector" class="theme-select" onchange="changeTheme(this.value)">
+            <option value="theme-dark">🌑 Темна</option>
+            <option value="theme-military">🪖 Мілітарі</option>
+            <option value="theme-light">☀️ Світла</option>
+            <option value="theme-cyberpunk">⚡ Кіберпанк</option>
+        </select>
+        <button type="button" class="refresh-btn-half" onclick="refreshAppData()">🔄 Оновити</button>
+    </div>
 
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.26</div>
+    <div class="app-version">v1.5.27</div>
 </div>
 
 <script>
@@ -390,11 +401,24 @@
 
     let isAdmin = false;
     let currentTeamNames = [];
-    let reportsCache = {}; // Кеш для збереження часу останніх звітів по користувачах
+    let reportsCache = {};
 
     function refreshAppData() {
         window.location.reload(true);
     }
+
+    // Управління кольоровими схемами та збереженням у localStorage
+    function changeTheme(themeName) {
+        document.body.className = themeName;
+        localStorage.setItem('b4s_theme', themeName);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('b4s_theme') || 'theme-dark';
+        document.body.className = savedTheme;
+        const themeSelect = document.getElementById('themeSelector');
+        if (themeSelect) themeSelect.value = savedTheme;
+    });
 
     function toggleAdminMode() {
         isAdmin = !isAdmin;
@@ -462,7 +486,7 @@
         }
     }
 
-function onUserSelectChange() {
+    function onUserSelectChange() {
         const selectedName = document.getElementById('name').value;
         const infoBox = document.getElementById('lastSubmitInfo');
         
@@ -470,20 +494,18 @@ function onUserSelectChange() {
             const entry = reportsCache[selectedName];
             infoBox.style.display = 'block';
             
-            // Витягуємо дату та час з рядка (очікується формат типу "DD.MM.YYYY HH:MM:SS" або подібний)
             let dateStr = entry.date || '';
             let timeOnly = '';
             let reportDatePart = '';
             
             if (dateStr.includes(' ')) {
                 const parts = dateStr.split(' ');
-                reportDatePart = parts[0]; // Наприклад "14.10.2026"
-                timeOnly = parts[1].substring(0, 5); // Години та хвилини "09:15"
+                reportDatePart = parts[0];
+                timeOnly = parts[1].substring(0, 5);
             } else {
                 reportDatePart = dateStr;
             }
 
-            // Розраховуємо вчорашню дату для порівняння
             const now = new Date();
             const todayStr = String(now.getDate()).padStart(2, '0') + '.' + 
                              String(now.getMonth() + 1).padStart(2, '0') + '.' + 
@@ -512,7 +534,7 @@ function onUserSelectChange() {
 
     async function loadAdminReportStatus() {
         const reportBox = document.getElementById('adminReportList');
-        reportBox.innerHTML = '<div style="font-size: 11px; color: #94a3b8; text-align: center;">Оновлення статусу...</div>';
+        reportBox.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center;">Оновлення статусу...</div>';
         
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getAdminReportStatus`);
@@ -520,7 +542,7 @@ function onUserSelectChange() {
             
             reportBox.innerHTML = '';
             if (reportData.length === 0) {
-                reportBox.innerHTML = '<div style="font-size: 11px; color: #94a3b8; text-align: center;">Склад порожній</div>';
+                reportBox.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); text-align: center;">Склад порожній</div>';
                 return;
             }
 
@@ -622,7 +644,7 @@ function onUserSelectChange() {
 
     async function submitBcsReport() {
         const statusMsg = document.getElementById('status-message');
-        statusMsg.style.color = '#f59e0b';
+        statusMsg.style.color = 'var(--admin-color)';
         statusMsg.textContent = 'Перевірка звітів особового складу...';
 
         try {
@@ -638,10 +660,10 @@ function onUserSelectChange() {
 
             window.open(result.reportUrl, '_blank');
 
-            statusMsg.style.color = '#22c55e';
+            statusMsg.style.color = 'var(--success)';
             statusMsg.textContent = 'Звіт БЧС успішно сформовано та відкрито!';
         } catch (e) {
-            statusMsg.style.color = '#ef4444';
+            statusMsg.style.color = 'var(--danger)';
             statusMsg.textContent = 'Помилка формування звіту.';
         }
     }
@@ -830,11 +852,11 @@ function onUserSelectChange() {
                 localStorage.setItem('b4s_user_task', selectedTask);
             }
 
-            statusMessage.style.color = '#22c55e';
+            statusMessage.style.color = 'var(--success)';
             statusMessage.textContent = 'Звіт успішно надіслано! Дякуємо.';
             setTimeout(() => { loadTeamMembers(selectedName); }, 1500);
         } catch (error) {
-            statusMessage.style.color = '#ef4444';
+            statusMessage.style.color = 'var(--danger)';
             statusMessage.textContent = 'Помилка надсилання.';
         } finally {
             submitBtn.disabled = false;
