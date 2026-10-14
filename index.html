@@ -83,17 +83,26 @@
             font-size: 16px;
             box-sizing: border-box;
         }
+        
+        /* Стилі для останнього звіту (звичайний / попереджувальний червонуватий) */
         .last-submit-info {
             font-size: 12px;
             color: var(--accent);
             margin-top: -10px;
             margin-bottom: 16px;
             background: rgba(59, 130, 246, 0.1);
-            padding: 6px 10px;
+            padding: 8px 10px;
             border-radius: 6px;
             border: 1px solid rgba(59, 130, 246, 0.2);
             display: none;
+            line-height: 1.4;
         }
+        .last-submit-info.warning {
+            color: #fca5a5;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
         .status-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -261,7 +270,7 @@
             padding: 0 4px;
         }
         
-        /* Нижня панель: вибір теми та оновлення розділені навпіл */
+        /* Нижня панель: вибір теми та оновлення */
         .bottom-action-bar {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -280,10 +289,26 @@
             text-align: center;
             box-sizing: border-box;
             margin-bottom: 0;
+            transition: all 0.3s ease;
         }
         .theme-select:hover, .refresh-btn-half:hover {
             color: var(--text-color);
             border-color: var(--accent);
+        }
+
+        /* Анімація переливчастого градієнта для активної кнопки оновлення */
+        @keyframes gradientPulse {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .refresh-btn-half.loading {
+            background: linear-gradient(270deg, var(--accent), var(--admin-color), var(--success));
+            background-size: 200% 200%;
+            animation: gradientPulse 1.5s ease infinite;
+            color: #fff !important;
+            font-weight: bold;
+            border-color: transparent;
         }
 
         #status-message {
@@ -380,7 +405,7 @@
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
     </form>
     
-    <!-- Нижня панель: зліва вибір теми, справа оновлення -->
+    <!-- Нижня панель: вибір теми та анімована кнопка оновлення -->
     <div class="bottom-action-bar">
         <select id="themeSelector" class="theme-select" onchange="changeTheme(this.value)">
             <option value="theme-dark">🌑 Темна</option>
@@ -388,12 +413,12 @@
             <option value="theme-light">☀️ Світла</option>
             <option value="theme-cyberpunk">⚡ Кіберпанк</option>
         </select>
-        <button type="button" class="refresh-btn-half" onclick="refreshAppData()">🔄 Оновити</button>
+        <button type="button" id="refreshBtn" class="refresh-btn-half" onclick="refreshAppData()">🔄 Оновити</button>
     </div>
 
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.27</div>
+    <div class="app-version">v1.5.28</div>
 </div>
 
 <script>
@@ -404,10 +429,14 @@
     let reportsCache = {};
 
     function refreshAppData() {
-        window.location.reload(true);
+        const btn = document.getElementById('refreshBtn');
+        btn.classList.add('loading');
+        btn.textContent = '⏳ Оновлення...';
+        setTimeout(() => {
+            window.location.reload(true);
+        }, 600);
     }
 
-    // Управління кольоровими схемами та збереженням у localStorage
     function changeTheme(themeName) {
         document.body.className = themeName;
         localStorage.setItem('b4s_theme', themeName);
@@ -490,11 +519,19 @@
         const selectedName = document.getElementById('name').value;
         const infoBox = document.getElementById('lastSubmitInfo');
         
-        if (selectedName && reportsCache[selectedName] && reportsCache[selectedName].submitted) {
-            const entry = reportsCache[selectedName];
-            infoBox.style.display = 'block';
+        if (!selectedName) {
+            infoBox.style.display = 'none';
+            return;
+        }
+
+        infoBox.style.display = 'block';
+        const entry = reportsCache[selectedName];
+
+        if (entry && entry.submitted && entry.date) {
+            // Звіт здано
+            infoBox.classList.remove('warning');
             
-            let dateStr = entry.date || '';
+            let dateStr = entry.date;
             let timeOnly = '';
             let reportDatePart = '';
             
@@ -527,8 +564,9 @@
             const timeText = timeOnly ? ` о ${timeOnly}` : '';
             infoBox.textContent = `📌 Останній звіт подано: ${readableWhen}${timeText}`;
         } else {
-            infoBox.style.display = 'none';
-            infoBox.textContent = '';
+            // Звіт ще НЕ здано — червонуватий попереджувальний фон
+            infoBox.classList.add('warning');
+            infoBox.textContent = `⚠️ Ви ще не подали звіт за поточний період. Будь ласка, заповніть форму!`;
         }
     }
 
