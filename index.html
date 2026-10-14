@@ -6,10 +6,13 @@
     <title>План на завтра / БЧС</title>
     
     <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" href="./icon.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="БЧС">
+<<<<<<< HEAD
+=======
     <link rel="icon" type="image/png" href="./icon.png">
     <link rel="apple-touch-icon" href="./icon.png">
 
@@ -85,6 +88,17 @@
             color: #fff;
             font-size: 16px;
             box-sizing: border-box;
+        }
+        .last-submit-info {
+            font-size: 12px;
+            color: #38bdf8;
+            margin-top: -10px;
+            margin-bottom: 16px;
+            background: rgba(56, 189, 248, 0.1);
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            display: none;
         }
         .status-grid {
             display: grid;
@@ -341,9 +355,11 @@
 
     <form id="planForm">
         <label for="name">Військовослужбовець:</label>
-        <select id="name" required>
+        <select id="name" required onchange="onUserSelectChange()">
             <option value="" disabled selected>Завантаження списку...</option>
         </select>
+        
+        <div id="lastSubmitInfo" class="last-submit-info"></div>
 
         <label>Статус / Локація:</label>
         <div class="status-grid">
@@ -368,7 +384,7 @@
 
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.24</div>
+    <div class="app-version">v1.5.25</div>
 </div>
 
 <script>
@@ -376,6 +392,7 @@
 
     let isAdmin = false;
     let currentTeamNames = [];
+    let reportsCache = {}; // Кеш для збереження часу останніх звітів по користувачах
 
     function refreshAppData() {
         window.location.reload(true);
@@ -412,8 +429,19 @@
     async function loadTeamMembers(preselectName = null) {
         const nameSelect = document.getElementById('name');
         try {
-            const response = await fetch(`${WEB_APP_URL}?action=getTeam`);
-            currentTeamNames = await response.json();
+            const response = await fetch(`${WEB_APP_URL}?action=getAdminReportStatus`);
+            const reportData = await response.json();
+            
+            reportsCache = {};
+            currentTeamNames = reportData.map(item => {
+                reportsCache[item.name] = item;
+                return item.name;
+            });
+            
+            if (currentTeamNames.length === 0) {
+                const fallbackResp = await fetch(`${WEB_APP_URL}?action=getTeam`);
+                currentTeamNames = await fallbackResp.json();
+            }
             
             nameSelect.innerHTML = '<option value="" disabled selected>Оберіть зі списку...</option>';
             currentTeamNames.forEach(name => {
@@ -425,6 +453,7 @@
 
             if (preselectName) {
                 nameSelect.value = preselectName;
+                onUserSelectChange();
             }
             if (isAdmin) {
                 renderAdminTeamList();
@@ -432,6 +461,54 @@
             }
         } catch (e) {
             nameSelect.innerHTML = '<option value="" disabled selected>Помилка завантаження</option>';
+        }
+    }
+
+function onUserSelectChange() {
+        const selectedName = document.getElementById('name').value;
+        const infoBox = document.getElementById('lastSubmitInfo');
+        
+        if (selectedName && reportsCache[selectedName] && reportsCache[selectedName].submitted) {
+            const entry = reportsCache[selectedName];
+            infoBox.style.display = 'block';
+            
+            // Витягуємо дату та час з рядка (очікується формат типу "DD.MM.YYYY HH:MM:SS" або подібний)
+            let dateStr = entry.date || '';
+            let timeOnly = '';
+            let reportDatePart = '';
+            
+            if (dateStr.includes(' ')) {
+                const parts = dateStr.split(' ');
+                reportDatePart = parts[0]; // Наприклад "14.10.2026"
+                timeOnly = parts[1].substring(0, 5); // Години та хвилини "09:15"
+            } else {
+                reportDatePart = dateStr;
+            }
+
+            // Розраховуємо вчорашню дату для порівняння
+            const now = new Date();
+            const todayStr = String(now.getDate()).padStart(2, '0') + '.' + 
+                             String(now.getMonth() + 1).padStart(2, '0') + '.' + 
+                             now.getFullYear();
+            
+            const yesterday = new Date();
+            yesterday.setDate(now.getDate() - 1);
+            const yesterdayStr = String(yesterday.getDate()).padStart(2, '0') + '.' + 
+                                 String(yesterday.getMonth() + 1).padStart(2, '0') + '.' + 
+                                 yesterday.getFullYear();
+
+            let readableWhen = reportDatePart;
+            if (reportDatePart === todayStr) {
+                readableWhen = 'сьогодні';
+            } else if (reportDatePart === yesterdayStr) {
+                readableWhen = 'вчора';
+            }
+
+            const timeText = timeOnly ? ` о ${timeOnly}` : '';
+            infoBox.textContent = `📌 Останній звіт подано: ${readableWhen}${timeText}`;
+        } else {
+            infoBox.style.display = 'none';
+            infoBox.textContent = '';
         }
     }
 
@@ -450,10 +527,10 @@
             }
 
             reportData.forEach(item => {
+                reportsCache[item.name] = item;
                 const row = document.createElement('div');
                 row.className = 'report-row';
                 
-                // Якщо це відпустка і є задача — виводимо її (напр. "Відпустка до 05.12.2026"), інакше звичайний статус
                 let displayStatus = (item.status === 'Відпустка' && item.task) ? item.task : item.status;
                 
                 let badgeHtml = item.submitted 
@@ -555,7 +632,7 @@
             const result = await response.json();
 
             if (!result.ready) {
-                alert(`Увага! Не всі подали звіти ЗА СЬОГОДНІ.\n\nЩе не здали: ${result.missing.join(', ')}`);
+                alert(`Увага! Не всі подали звіти.\n\nЩе не здали: ${result.missing.join(', ')}`);
                 statusMsg.textContent = 'Подача відкладена: є заборгованість по звітах.';
                 loadAdminReportStatus();
                 return;
@@ -757,6 +834,7 @@
 
             statusMessage.style.color = '#22c55e';
             statusMessage.textContent = 'Звіт успішно надіслано! Дякуємо.';
+            setTimeout(() => { loadTeamMembers(selectedName); }, 1500);
         } catch (error) {
             statusMessage.style.color = '#ef4444';
             statusMessage.textContent = 'Помилка надсилання.';
