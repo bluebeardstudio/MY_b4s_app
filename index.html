@@ -705,7 +705,7 @@
         }
     }
 
-    async function sendWhatsAppBcs() {
+async function sendWhatsAppBcs() {
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getWhatsAppSummary`);
             const data = await response.json();
@@ -716,8 +716,11 @@
             const vacList = data["Відпустка"] || [];
             const tripList = data["Відрядження"] || [];
 
-            const distText = `Дистанційно - ${distList.length}` + (distList.length ? ` (${distList.join(', ')})` : '');
-            const ppdText = `ППД - ${ppdList.length}` + (ppdList.length ? ` (${ppdList.join(', ')})` : '');
+            // Для ППД та Дистанційно виводимо ТІЛЬКИ кількість
+            const distText = `Дистанційно - ${distList.length}`;
+            const ppdText = `ППД - ${ppdList.length}`;
+            
+            // Для інших категорій (Лікування, Відпустка, Відрядження) залишаємо кількість + прізвища
             const medText = `Лікарняний - ${medList.length}` + (medList.length ? ` (${medList.join(', ')})` : '');
             const vacText = `Відпустка - ${vacList.length}` + (vacList.length ? ` (${vacList.join(', ')})` : '');
             const tripText = `Відрядження - ${tripList.length}` + (tripList.length ? ` (${tripList.join(', ')})` : '');
