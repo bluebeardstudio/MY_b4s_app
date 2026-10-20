@@ -161,7 +161,7 @@
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
-            margin-bottom: 14px;
+            margin-bottom: 0;
         }
         .admin-report-box {
             background: var(--input-bg);
@@ -335,9 +335,12 @@
     <div class="admin-panel" id="adminPanel">
         <label style="color: var(--admin-color); margin-bottom: 6px; font-weight: bold;">Керування звітом БЧС:</label>
         
-        <button type="button" class="bcs-btn" onclick="submitBcsReport()">Подати БЧС черговому</button>
+        <div class="bcs-actions-grid">
+            <button type="button" class="bcs-btn" onclick="submitBcsReport()">Подати БЧС черговому</button>
+            <button type="button" class="bcs-btn-small" onclick="sendWhatsAppBcs()" title="Надіслати у WhatsApp">💬</button>
+        </div>
 
-        <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Статус звітів особового складу за сьогодні:</label>
+        <label style="font-size: 12px; color: var(--text-muted); margin-top: 10px; margin-bottom: 4px;">Статус звітів особового складу за сьогодні:</label>
         <div class="admin-report-box" id="adminReportList">
             <div style="font-size: 11px; color: var(--text-muted); text-align: center;">Завантаження статусу...</div>
         </div>
@@ -417,7 +420,7 @@
 
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.28</div>
+    <div class="app-version">v1.5.29</div>
 </div>
 
 <script>
@@ -584,7 +587,7 @@
                 const row = document.createElement('div');
                 row.className = 'report-row';
                 
-                let displayStatus = (item.status === 'Відпустка' && item.task) ? item.task : item.status;
+                let displayStatus = ((item.status === 'Відпустка' || item.status === 'Лікування') && item.task) ? item.task : item.status;
                 
                 let badgeHtml = item.submitted 
                     ? `<span class="badge ok" title="${item.task}">${displayStatus}</span>` 
@@ -702,11 +705,39 @@
         }
     }
 
+    async function sendWhatsAppBcs() {
+        try {
+            const response = await fetch(`${WEB_APP_URL}?action=getWhatsAppSummary`);
+            const data = await response.json();
+
+            const distList = data["Дистанційно"] || [];
+            const ppdList = data["ППД"] || [];
+            const medList = data["Лікування"] || [];
+            const vacList = data["Відпустка"] || [];
+            const tripList = data["Відрядження"] || [];
+
+            const distText = `Дистанційно - ${distList.length}` + (distList.length ? ` (${distList.join(', ')})` : '');
+            const ppdText = `ППД - ${ppdList.length}` + (ppdList.length ? ` (${ppdList.join(', ')})` : '');
+            const medText = `Лікарняний - ${medList.length}` + (medList.length ? ` (${medList.join(', ')})` : '');
+            const vacText = `Відпустка - ${vacList.length}` + (vacList.length ? ` (${vacList.join(', ')})` : '');
+            const tripText = `Відрядження - ${tripList.length}` + (tripList.length ? ` (${tripList.join(', ')})` : '');
+
+            const message = `Вітаю!\nТелерадіо відділ\n${distText}\n${ppdText}\n${medText}\n${vacText}\n${tripText}`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/380933193077?text=${encodedMessage}`;
+            
+            window.open(whatsappUrl, '_blank');
+        } catch (e) {
+            alert('Помилка формування даних для WhatsApp');
+        }
+    }
+
     function handleAdminStatusChange(status) {
         const container = document.getElementById('adminTaskContainer');
-        if (status === 'Відпустка') {
+        if (status === 'Відпустка' || status === 'Лікування') {
             container.innerHTML = `
-                <label style="font-size: 11px; margin-bottom: 2px;">Дата закінчення відпустки:</label>
+                <label style="font-size: 11px; margin-bottom: 2px;">Дата закінчення (${status.toLowerCase()}):</label>
                 <input type="date" id="adminVacationEndDate" style="padding: 6px; font-size: 13px; margin-bottom: 6px;" required>
             `;
         } else {
@@ -728,10 +759,10 @@
             return;
         }
 
-        if (targetStatus === 'Відпустка') {
+        if (targetStatus === 'Відпустка' || targetStatus === 'Лікування') {
             const dateInputVal = document.getElementById('adminVacationEndDate').value;
             if (!dateInputVal) {
-                alert('Введіть дату закінчення відпустки!');
+                alert('Введіть дату закінчення!');
                 return;
             }
             const parts = dateInputVal.split('-');
@@ -740,7 +771,7 @@
             } else {
                 customDate = dateInputVal;
             }
-            targetTask = `Відпустка до ${customDate}`;
+            targetTask = `${targetStatus} до ${customDate}`;
         } else {
             targetTask = document.getElementById('adminTargetTask').value.trim();
             if (!targetTask) {
@@ -756,7 +787,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: targetName, location: targetStatus, task: targetTask, customDate: customDate })
             });
-            if (targetStatus === 'Відпустка') {
+            if (targetStatus === 'Відпустка' || targetStatus === 'Лікування') {
                 document.getElementById('adminVacationEndDate').value = '';
             } else {
                 document.getElementById('adminTargetTask').value = '';
@@ -782,13 +813,13 @@
                     btn.classList.add('active');
                 }
             });
-            if (savedLocation === 'Відпустка') {
-                updateTaskFieldForVacation(true);
+            if (savedLocation === 'Відпустка' || savedLocation === 'Лікування') {
+                updateTaskFieldForSpecial(true, savedLocation);
             }
         }
 
         if (savedTask) {
-            const taskInput = document.getElementById('task') || document.getElementById('vacationEndDate');
+            const taskInput = document.getElementById('task') || document.getElementById('specialEndDate');
             if (taskInput) taskInput.value = savedTask;
         }
     });
@@ -796,12 +827,12 @@
     const statusBtns = document.querySelectorAll('.status-btn');
     const locationInput = document.getElementById('location');
 
-    function updateTaskFieldForVacation(isVacation) {
+    function updateTaskFieldForSpecial(isSpecial, statusName = '') {
         const container = document.getElementById('dynamicTaskContainer');
-        if (isVacation) {
+        if (isSpecial) {
             container.innerHTML = `
-                <label for="vacationEndDate">Дата закінчення відпустки:</label>
-                <input type="date" id="vacationEndDate" required>
+                <label for="specialEndDate">Дата закінчення (${statusName.toLowerCase()}):</label>
+                <input type="date" id="specialEndDate" required>
             `;
         } else {
             container.innerHTML = `
@@ -818,10 +849,10 @@
             const val = btn.getAttribute('data-value');
             locationInput.value = val;
 
-            if (val === 'Відпустка') {
-                updateTaskFieldForVacation(true);
+            if (val === 'Відпустка' || val === 'Лікування') {
+                updateTaskFieldForSpecial(true, val);
             } else {
-                updateTaskFieldForVacation(false);
+                updateTaskFieldForSpecial(false);
             }
         });
     });
@@ -844,10 +875,10 @@
         let selectedTask = "";
         let customDate = "";
 
-        if (selectedLocation === 'Відпустка') {
-            const dateInputVal = document.getElementById('vacationEndDate').value;
+        if (selectedLocation === 'Відпустка' || selectedLocation === 'Лікування') {
+            const dateInputVal = document.getElementById('specialEndDate').value;
             if (!dateInputVal) {
-                alert('Будь ласка, вкажіть дату закінчення відпустки!');
+                alert('Будь ласка, вкажіть дату закінчення!');
                 return;
             }
             const parts = dateInputVal.split('-');
@@ -856,7 +887,7 @@
             } else {
                 customDate = dateInputVal;
             }
-            selectedTask = `Відпустка до ${customDate}`;
+            selectedTask = `${selectedLocation} до ${customDate}`;
         } else {
             selectedTask = document.getElementById('task').value;
         }

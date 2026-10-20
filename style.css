@@ -78,3 +78,30 @@ body.theme-cyberpunk button.submit-btn {
 body.theme-cyberpunk .bcs-btn {
     box-shadow: 0 0 10px var(--admin-color);
 }
+body.theme-cyberpunk .bcs-btn-small {
+    box-shadow: 0 0 10px var(--success);
+}
+
+/* Стилі для розділених кнопок БЧС (PDF + WhatsApp) */
+.bcs-actions-grid {
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.bcs-btn-small {
+    background: #25D366; /* Фірмовий зелений колір WhatsApp */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+.bcs-btn-small:hover {
+    opacity: 0.9;
+}
