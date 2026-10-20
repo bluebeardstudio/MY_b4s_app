@@ -84,7 +84,6 @@
             box-sizing: border-box;
         }
         
-        /* Інформація про останній звіт / попередження */
         .last-submit-info {
             font-size: 12px;
             color: var(--accent);
@@ -174,7 +173,6 @@
             transition: all 0.3s ease;
         }
         
-        /* Анімація переливчастого градієнта для завантаження в адмінці */
         @keyframes loadingShimmer {
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
@@ -284,7 +282,6 @@
             padding: 0 4px;
         }
         
-        /* Нижня панель: вибір теми та оновлення */
         .bottom-action-bar {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -407,7 +404,6 @@
         <button type="submit" class="submit-btn" id="submitBtn">Надіслати звіт</button>
     </form>
     
-    <!-- Нижня панель: вибір теми та оновлення -->
     <div class="bottom-action-bar">
         <select id="themeSelector" class="theme-select" onchange="changeTheme(this.value)">
             <option value="theme-dark">🌑 Темна</option>
@@ -420,7 +416,7 @@
 
     <div id="status-message"></div>
 
-    <div class="app-version">v1.5.29</div>
+    <div class="app-version">v1.5.30</div>
 </div>
 
 <script>
@@ -705,7 +701,7 @@
         }
     }
 
-async function sendWhatsAppBcs() {
+    async function sendWhatsAppBcs() {
         try {
             const response = await fetch(`${WEB_APP_URL}?action=getWhatsAppSummary`);
             const data = await response.json();
@@ -716,11 +712,11 @@ async function sendWhatsAppBcs() {
             const vacList = data["Відпустка"] || [];
             const tripList = data["Відрядження"] || [];
 
-            // Для ППД та Дистанційно виводимо ТІЛЬКИ кількість
+            // Для Дистанційно та ППД виводимо виключно кількість (без прізвищ)
             const distText = `Дистанційно - ${distList.length}`;
             const ppdText = `ППД - ${ppdList.length}`;
             
-            // Для інших категорій (Лікування, Відпустка, Відрядження) залишаємо кількість + прізвища
+            // Для решти категорій залишаємо кількість і прізвища у дужках
             const medText = `Лікарняний - ${medList.length}` + (medList.length ? ` (${medList.join(', ')})` : '');
             const vacText = `Відпустка - ${vacList.length}` + (vacList.length ? ` (${vacList.join(', ')})` : '');
             const tripText = `Відрядження - ${tripList.length}` + (tripList.length ? ` (${tripList.join(', ')})` : '');
